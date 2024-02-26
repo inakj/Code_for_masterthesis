@@ -11,10 +11,10 @@ class design_values:
         self.p_d = self.p * 1.5
         self.q_d = self.g_d + self.p_d
         self.M_ULS = self.calculate_M_ULS(self.g_d,self.p_d,length,4)
-        self.M_SLS = self.calculate_M_SLS(selfload,liveload,length,4)
+        self.M_SLS = self.calculate_M_SLS(self.g,self.p,length,4)
         self.M1 = self.M_SLS[0]
         self.M2 = self.M_SLS[1]
-        self.M_SLS_tot:float = self.M_SLS[2]
+        self.M_SLS_tot = self.M_SLS[2]
         self.M_Ed = self.M_ULS[2]
         self.V_Ed = self.calculate_V_Ed(self.q_d,length,0)
         self.N_Ed = self.calculate_N_Ed()

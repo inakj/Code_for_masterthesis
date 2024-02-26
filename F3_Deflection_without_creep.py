@@ -71,7 +71,7 @@ class deflection:
         q_cr = 8 * M_cr * 10 ** (-6) / length **2
         return q_cr
 
-    def calculate_deflection(self,M_cr:float,M,deflection_cracked,deflection_uncracked): # 7.4.3, with tension stiffening
+    def calculate_deflection(self,M_cr,M,deflection_cracked,deflection_uncracked): # 7.4.3, with tension stiffening
         beta = 0.5 # assumed long term load
         zeta = 1 - beta * (M_cr / (M * 10 ** 6)) ** 2 #Zeta: distribution coefficient, M_crack: crackmoment, M: SLS moment
         deflection  = zeta * deflection_cracked + (1 - zeta) * deflection_uncracked
@@ -109,7 +109,7 @@ material = Material(input_concrete_class,float(input_steel_class[1:4]))
 cross_section = cross_section_parameters(input_width,input_height,input_nr_bars,input_bar_diameter,input_stirrup_diameter,input_exposure_class)
 
 #Loading object 
-loading = design_values(input_distributed_load,input_beam_length,4)
+loading = design_values(input_distributed_load,input_beam_length,input_beam_length)
 
 test = deflection(loading,cross_section,material)
 
