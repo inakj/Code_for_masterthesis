@@ -23,6 +23,7 @@ class cross_section_parameters:
         self.d = self.get_d(height,self.cnom,bar_diameter,stirrup_diameter)
         self.As = self.calculate_As(bar_diameter,nr_bars)
         self.I = self.calculate_I(height,width)
+        
 
     
     def get_c_min_b(self,bar_diameter):

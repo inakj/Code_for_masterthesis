@@ -80,10 +80,7 @@ class crack_control:
                     if a[i] <= a_max < a[i + 1]:
                         max_bar_diameter = (x2-x1)/(a[i+1]-a[i])*(a_max-a[i]) + x1
                         return max_bar_diameter
-                    else:
-                        return None
-                        print(f'There is no max diameter for sigma ={self.sigma}')
-                    
+            
 
     def control_of_bar_diameter(self,bar_diameter,max_bar_diameter):
         if max_bar_diameter == None:
@@ -132,4 +129,4 @@ loading_instance = design_values(input_distributed_load,input_beam_length,tall)
 crack = crack_control(cross_section_instance,loading_instance,materials_instance)
 
 
-print(crack.max_bar_diameter)
+print(crack.sigma)

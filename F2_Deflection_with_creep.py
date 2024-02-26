@@ -6,7 +6,7 @@ from C2_Design_values import design_values
 
 from B1_Material_strength_properties import Material
 
-from F4_Shrink_and_creep import creep_number
+from F4_phi_calculation import creep_number
 
 class creep_deflection:
 
@@ -54,45 +54,7 @@ class creep_deflection:
         return longterm_load
 
     def calculate_deflection_with_shrink(self,length,longterm_load,Ec_mid,Ic):
-        w = 5/384 * longterm_load * (length * 1000) ** 4 / (Ec_mid * Ic)
+        w = (5/384) * longterm_load * (length * 1000) ** 4 / (Ec_mid * Ic)
         return w
     
 
-#----------------
-input_concrete_class:str = 'C20' #must be given with 'C + number'
-input_steel_class:str = 'B500NC' #must be given with in this exact way
-input_width: int = 200 
-input_height: int = 500
-input_nr_bars: int = 6
-input_bar_diameter: int = 20
-input_stirrup_diameter: int = 10
-input_distributed_selfload: int = 5 #kN/m
-input_selfload_application: int = 7 #days
-input_distributed_liveload: int = 15 #kN/m
-input_liveload_application: int = 90 #days
-input_percent_longlasting_liveload: float = 40 # %
-input_beam_length: int = 8 
-input_exposure_class:str = 'XC1'
-input_axial_force = 0
-
-material_instance = Material(input_concrete_class,float(input_steel_class[1:4]))
-
-#Cross section object
-cross_section_instance = cross_section_parameters(input_width,input_height,input_nr_bars,input_bar_diameter,input_stirrup_diameter,input_exposure_class)
-
-#Loading object 
-loading_instance = design_values(input_distributed_selfload,input_distributed_liveload,input_beam_length)
-
-t1 = 7
-t2 = 90
-
-# Creep objects
-creep_number_t1_days = creep_number(t1,18263,cross_section_instance,material_instance,'R',40)
-creep_number_t2_days = creep_number(t2,18263,cross_section_instance,material_instance,'R',40)
-
-print(creep_number_t1_days.phi)
-print(creep_number_t2_days.phi)
-
-deflection = creep_deflection(loading_instance,cross_section_instance,material_instance,creep_number_t1_days,creep_number_t2_days,input_percent_longlasting_liveload/100)
-
-print(deflection.w)

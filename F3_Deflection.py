@@ -113,4 +113,4 @@ loading = design_values(input_distributed_load,input_beam_length,input_beam_leng
 
 test = deflection(loading,cross_section,material)
 
-print(test.control)
+print(test.total_deflection)

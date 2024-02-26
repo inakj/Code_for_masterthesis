@@ -14,7 +14,10 @@ input_percent_longlasting_liveload: float = 40 # %
 input_beam_length: int = 8 
 input_exposure_class:str = 'XC1'
 input_axial_force = 0
-distributed_load = input_distributed_liveload + input_distributed_selfload
+input_cement_class = 'R'
+input_RH = 40 #%
+
+
 #-------------------------------------
 
 # import relevant scripts
@@ -35,7 +38,7 @@ materials_instance = Material(input_concrete_class,float(input_steel_class[1:4])
 cross_section_instance = cross_section_parameters(input_width,input_height,input_nr_bars,input_bar_diameter,input_stirrup_diameter,input_exposure_class)
 
 #Loading object 
-loading_instance = design_values(distributed_load,input_beam_length,4) 
+loading_instance = design_values(input_distributed_selfload,input_distributed_liveload,input_beam_length) 
 
 crack = crack_control(cross_section_instance,loading_instance,materials_instance)
 

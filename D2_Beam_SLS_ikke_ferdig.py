@@ -17,7 +17,6 @@ class capacity_beam_SLS:
         self.control_bar_diameter = self.control_of_bar_diameter(cross_section.bar_diameter,self.max_bar_diameter)
         
         
-    
     def get_factor_k_c(self,cnom,c_min_dur): 
         k_c = min(cnom / c_min_dur, 1.3)
         return k_c

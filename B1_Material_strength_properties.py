@@ -95,8 +95,6 @@ class Material:
                 print("There is no concrete class called", concrete_class)
                 sys.exit("Script terminated due to an error.")
     
-
-    
 # get fck based on index number  
     def get_fck(self):
         fck_vektor = [12,16,20,25,30,35,40,45,50,55,60,70,80,90]
