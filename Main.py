@@ -23,10 +23,14 @@ input_RH = 40 #%
 from C2_Design_values import design_values
 from B1_Material_strength_properties import Material
 from C1_Cross_section import cross_section_parameters
-from ULS.D1_Beam_ULS_ikke_ferdig import capacity_beam_ULS
-from SLS.D2_Beam_SLS_ikke_ferdig import capacity_beam_SLS
-from SLS.F1_Crack_width_control import crack_control
+from D1_Beam_ULS_ikke_ferdig import capacity_beam_ULS
+from F1_Crack_width_control import crack_control
 from E1_As_control import reinforcement
+from F3_Deflection_short_time import deflection_shorttime
+from F2_Deflection_longterm import deflection_longtime 
+from F2_Deflection_longterm import creep_deflection
+from F2_Deflection_longterm import shrink_deflection
+from F4_phi_calculation import creep_number
 
 
 #Material object
@@ -38,40 +42,50 @@ cross_section_instance = cross_section_parameters(input_width,input_height,input
 #Loading object 
 loading_instance = design_values(input_distributed_selfload,input_distributed_liveload,input_beam_length) 
 
+# ULS object
+ULS = capacity_beam_ULS(cross_section_instance,materials_instance,loading_instance)
+
+#Crack-control object
 crack = crack_control(cross_section_instance,loading_instance,materials_instance)
 
-#beam_crack = crack_control(cross_section_instance,loading_instance,materials_instance)
+# Deflection object
+deflection_short_time = deflection_shorttime(loading_instance,cross_section_instance,materials_instance)
 
-#beam_ULS = capacity_beam_ULS(cross_section_instance,materials_instance,loading_instance)
+t1 = input_selfload_application
+t2 = input_liveload_application
+t = 18263 # 50 years
+factor = input_percent_longlasting_liveload
+cement_class = input_cement_class
+RH = input_RH
 
-# Reinforcement object
-#reinforcement_instance = reinforcement(loading_instance,beam_ULS,cross_section_instance,materials_instance)
+phi_t1 = creep_number(t1,t,cross_section_instance,materials_instance,cement_class,RH)
 
-#beam_SLS = capacity_beam_SLS(cross_section_instance,loading_instance,materials_instance)
-"""""
+phi_t2 = creep_number(t2,t,cross_section_instance,materials_instance,cement_class,RH)
+
+creep = creep_deflection(loading_instance,cross_section_instance,materials_instance,phi_t1,phi_t2,factor)
+
+shrink = shrink_deflection(cement_class,materials_instance,RH,loading_instance,creep,cross_section_instance)
+
+deflection_long_time = deflection_longtime(shrink,creep,cross_section_instance)
+
 class beam:
     
-    def __inti__(self,cross_section,material,loading):
-        self.cross = cross_section
-        self.material = material
-        self.loading = loading
+    def __init__(self,crack,deflection_short_time,deflection_long_time,ULS):
+        self.crack = crack
+        self.deflection_short_time = deflection_short_time
+        self.deflection_long_time = deflection_long_time
+        self.ULS = ULS
 
-    def calculate_all(self,cross_section,material,loading):
-        self.beam_ULS = beam_ULS(cross_section,material,loading)
-        self.beam_SLS = beam_SLS(cross_section,material,loading)
+    def controll_all_SLS(self):
+        self.crack_control = crack.control_bar_diameter
+        self.control_shorttime_deflection = deflection_short_time.control
+        self.control_longtime_deflection = deflection_long_time.control
 
-    def get_utilization_degree(self):
-        self.beam_ULS.utilization_degree_M
+    def controll_all_ULS(self,ULS):
+        self.M_and_V_control  = ULS.control
+
+control = beam(crack,deflection_short_time,deflection_long_time,ULS)
+
 
 #beam1 = beam(cross_section_instance,materials_instance,loading_instance)
-
-"""
-
-
-
-
-
-
-
-
 

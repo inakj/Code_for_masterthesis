@@ -14,7 +14,7 @@ class capacity_beam_ULS:
         self.M_check = self.do_control_of_M_cap(self.M_Rd,load.M_Ed,self.utilization_degree_M)
         self.V_check = self.do_control_of_V_cap(self.V_Rd,load.V_Ed,self.utilization_degree_V)
         self.shear_rebar = self.calc_shear_reinforcement(self.V_Rd,load.V_Ed,cross_section.d,material.fyd)
-        self.control_ULS = self.do_control_ULS(self.M_utilization,self.V_utilization)
+        self.control = self.do_control_ULS(self.M_utilization,self.V_utilization)
     
     def get_alpha(self,eps_cu1,eps_yd):
         alpha_bal = eps_cu1 / (eps_cu1 + eps_yd)
