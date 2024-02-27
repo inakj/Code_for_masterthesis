@@ -9,7 +9,7 @@ import sys
 # Defining a class for the cross section
 class cross_section_parameters:
 
-    def __init__(self,width,height,nr_bars,bar_diameter,stirrup_diameter,exposure_class):
+    def __init__(self,width,height,nr_bars,bar_diameter,stirrup_diameter,exposure_class, delta_c_dev=10):
         self.width = width
         self.height = height
         self.nr_bars = nr_bars
@@ -18,7 +18,7 @@ class cross_section_parameters:
         self.exposure_class = exposure_class
         self.Ac = width * height
         self.c_min_b = self.get_c_min_b(bar_diameter)
-        self.c_min_dur = self.get_c_min_dur(exposure_class,self.c_min_b)
+        self.c_min_dur = self.get_c_min_dur(exposure_class,self.c_min_b, delta_c_dev)
         self.cnom = self.calculate_cnom(self.c_min_b,self.c_min_dur)
         self.d = self.get_d(height,self.cnom,bar_diameter,stirrup_diameter)
         self.As = self.calculate_As(bar_diameter,nr_bars)
@@ -48,9 +48,9 @@ class cross_section_parameters:
         return c_min_dur
 
     # Function that calculas nominal cover based on exposure class 
-    def calculate_cnom(self,c_min_b,c_min_dur):
+    def calculate_cnom(self,c_min_b,c_min_dur, delta_c_dev: float):
         c_min = max(c_min_b,c_min_dur,10) # 4.4.1.2
-        delta_c_dev = 10 # NA.4.4.1.3
+        # delta_c_dev = 10 # NA.4.4.1.3
         cnom = c_min + delta_c_dev #4.4.1.1
         return cnom #mm
 
