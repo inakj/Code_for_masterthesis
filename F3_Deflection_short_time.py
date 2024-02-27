@@ -1,7 +1,5 @@
 import numpy as np
 
-from C1_Cross_section import cross_section_parameters
-
 
 class deflection_shorttime:
 
