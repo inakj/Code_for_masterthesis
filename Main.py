@@ -16,8 +16,6 @@ input_exposure_class:str = 'XC1'
 input_axial_force = 0
 input_cement_class = 'R'
 input_RH = 40 #%
-
-
 #-------------------------------------
 
 # import relevant scripts
@@ -25,9 +23,9 @@ input_RH = 40 #%
 from C2_Design_values import design_values
 from B1_Material_strength_properties import Material
 from C1_Cross_section import cross_section_parameters
-from D1_Beam_ULS_ikke_ferdig import capacity_beam_ULS
-from D2_Beam_SLS_ikke_ferdig import capacity_beam_SLS
-from F1_Crack_width_control import crack_control
+from ULS.D1_Beam_ULS_ikke_ferdig import capacity_beam_ULS
+from SLS.D2_Beam_SLS_ikke_ferdig import capacity_beam_SLS
+from SLS.F1_Crack_width_control import crack_control
 from E1_As_control import reinforcement
 
 
