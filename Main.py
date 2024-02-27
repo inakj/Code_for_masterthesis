@@ -23,7 +23,7 @@ input_RH = 40 #%
 from C2_Design_values import design_values
 from B1_Material_strength_properties import Material
 from C1_Cross_section import cross_section_parameters
-from D1_Beam_ULS_ikke_ferdig import capacity_beam_ULS
+from D1_Beam_ULS import capacity_beam_ULS
 from F1_Crack_width_control import crack_control
 from E1_As_control import reinforcement
 from F3_Deflection_short_time import deflection_shorttime
