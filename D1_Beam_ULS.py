@@ -6,7 +6,7 @@ import numpy as np
 # defining the class "Beam"
 class capacity_beam_ULS:
     def __init__(self,cross_section,material,load):
-        self.alpha_bal = self.get_alpha(material.eps_cu1,material.eps_yd)
+        self.alpha = self.get_alpha(material.eps_cu1,material.eps_yd,cross_section.As,material.Es,material.fcd,cross_section.width,cross_section.d,material.fyd)
         self.M_Rd = self.calc_M_Rd(self.alpha_bal,material.fcd,cross_section.width,cross_section.d) 
         self.V_Rd = self.calc_V_Rd(cross_section.d,cross_section.As,cross_section.width,load.N_Ed,cross_section.Ac,material.fcd,material.gamma_concrete,material.fck) 
         self.utilization_degree_M = self.get_utilization_degree_M(self.M_Rd,load.M_Ed)
@@ -16,12 +16,20 @@ class capacity_beam_ULS:
         self.shear_rebar = self.calc_shear_reinforcement(self.V_Rd,load.V_Ed,cross_section.d,material.fyd)
         self.control = self.do_control_ULS(self.utilization_degree_M,self.utilization_degree_V)
     
-    def get_alpha(self,eps_cu1,eps_yd):
+    def get_alpha(self,eps_cu1,eps_yd,As,Es,fcd,width,d,fyd):
         alpha_bal = eps_cu1 / (eps_cu1 + eps_yd)
-        return alpha_bal
-    
-    def calc_M_Rd(self,alpha_bal,fcd,width,d):
-        M_Rd = 0.8 * alpha_bal * (1 - 0.4 * alpha_bal) * fcd * width * d ** 2
+        Apb = 0.8 * alpha_bal * width * d * fcd / fyd 
+        if As <= Apb: # Skal = være her??
+            alpha = (fyd * As)/ (0.8 * fcd * width * d)
+        elif As > Apb:
+            a = 0.8 * fcd * width * d
+            b = eps_cu1 * Es * As
+            c = - eps_cu1 * Es * As
+            alpha = max((- b + np.sqrt(b ** 2 - 4 * a * c)) / (2 * a), - b - np.sqrt(b ** 2 - 4 * a * c) / (2 * a))
+        return alpha
+
+    def calc_M_Rd(self,fcd,width,d):
+        M_Rd = 0.8 * self.alpha * (1 - 0.4 * self.alpha) * fcd * width * d ** 2
         return M_Rd
     
     # 6.2.2 

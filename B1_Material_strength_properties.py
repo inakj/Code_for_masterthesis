@@ -56,12 +56,13 @@ class Material:
         self.gamma_prestress = 1.15
         self.fpd = self.fpk / self.gamma_prestress
         self.Ep = 1.95 * 10 ** 6
+        self.index_prestress = self.get_index(steel_name)
 
 
 #get loadfactors 
     def get_load_factors(self):
         gamma_shrinkage = 1
-        gamma_prestress_favorable = 1
+        gamma_prestress_favorable = 1.1
         gamma_prestress_unfavorable = 1.3
         return gamma_shrinkage, gamma_prestress_favorable, gamma_prestress_unfavorable
 
@@ -177,16 +178,45 @@ class Material:
         eps_cu3_vektor = [3.5,3.5,3.5,3.5,3.5,3.5,3.5,3.5,3.5,3.1,2.9,2.7,2.6,2.6]
         return eps_cu3_vektor[self.index]
     
+#PRESTRESSING 
+    def get_index(self,steel_name): 
+        match steel_name:
+            case 'Y19060S3':
+                return 0
+            case 'Y1860S3':
+                return 1
+            case 'Y1860S7':
+                return 2
+            case 'Y1770S7':
+                return 3
+            case 'Y1860S7G':
+                return 4
+            case 'Y1820S7G':
+                return 5
+            case 'Y1700S7G':
+                return 6
+            case 'Y2160S3':
+                return 7
+            case 'Y2060S3':
+                return 8
+            case 'Y1960S3':
+                return 9
+            case 'Y2160S7':
+                return 10 
+            case 'Y2060S7':
+                return 11
+            case 'Y1960S7':
+                return 12
+            case _:
+                print("There is no steel name called", steel_name)
+                sys.exit("Script terminated due to an error.")
 
-input_concrete_class:str = 'C20' #must be given with 'C + number'
-input_steel_class:str = 'B500NC' #must be given with in this exact way
-input_width: int = 200 
-input_height: int = 500
-input_nr_bars: int = 6
-input_bar_diameter: int = 20
-input_stirrup_diameter: int = 10
-input_distributed_load: int = 20 #kN/m
-input_beam_length: int = 8 
-input_exposure_class:str = 'XC1'
-input_axial_force = 0
+    def get_steel_diameter(self):
+        prestress_diameter = [5.2,6.5,6.8,7.5,7,9,11,12.5,13,15.2,16,15.2,
+                              16,18,12.7,15.2,18,5.2,5.2,6.5,6.85,7,9]
+        return prestress_diameter[self.index_prestress]
+    
+    def get_tensile_strength(self): # DU Stoppet her!
+        tensile_strength = [1960]
+        return tensile_strength[self.index_prestress]
 
