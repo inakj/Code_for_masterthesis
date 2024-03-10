@@ -89,3 +89,4 @@ control = beam(crack,deflection_short_time,deflection_long_time,ULS)
 
 #beam1 = beam(cross_section_instance,materials_instance,loading_instance)
 
+print(cross_section_instance.cnom)

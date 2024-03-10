@@ -14,7 +14,7 @@ class capacity_beam_ULS:
         self.M_check = self.do_control_of_M_cap(self.M_Rd,load.M_Ed,self.utilization_degree_M)
         self.V_check = self.do_control_of_V_cap(self.V_Rd,load.V_Ed,self.utilization_degree_V)
         self.shear_rebar = self.calc_shear_reinforcement(self.V_Rd,load.V_Ed,cross_section.d,material.fyd)
-        self.control = self.do_control_ULS(self.M_utilization,self.V_utilization)
+        self.control = self.do_control_ULS(self.utilization_degree_M,self.utilization_degree_V)
     
     def get_alpha(self,eps_cu1,eps_yd):
         alpha_bal = eps_cu1 / (eps_cu1 + eps_yd)
@@ -52,8 +52,8 @@ class capacity_beam_ULS:
             M_check = f'Moment capacity is not suificcient, and the utilization degree is {M_utilization:.1f}%'
         return M_check
     
-    def do_control_of_V_cap(self,V_Rd,load,V_utilization):
-        if V_Rd >= load.V_Ed:
+    def do_control_of_V_cap(self,V_Rd,V_Ed,V_utilization):
+        if V_Rd >= V_Ed:
             V_check = f'Shear capacity is suificcient, and the utilization degree is {V_utilization:.1f}%'
         else:
             V_check = f'Shear capacity is not suificcient, and the utilization degree is {V_utilization:.1f}%'

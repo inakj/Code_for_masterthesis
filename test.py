@@ -1,9 +1,18 @@
-h_0 = 150
-h_0_vector = [100,200,300,500]
-k_h_vector = [1,0.85,0.75,0.7]
-for i in range(len(h_0_vector)-1):
-    if h_0_vector[i+1] >= h_0 >= h_0_vector[i]:
-        k_h = (k_h_vector[i+1] - k_h_vector[i]) / (h_0_vector[i+1] - h_0_vector[i]) * (h_0 - h_0_vector[i]) + k_h_vector[i]
+import numpy as np
+
+d = 0.9
+b = 0.3
+e = 0.4
+a = 0.262
+netta = 13.9
+ro = 0.0052
 
 
-print(k_h)
+coefficients = [d / (6 * (e + a)), 0.5 * (1 - d / (e + a)), netta * ro, - netta * ro] 
+roots = np.roots(coefficients)
+
+print(roots)
+for num in roots:
+    if 0 < num < 1:
+        answer = num
+print(float(answer))

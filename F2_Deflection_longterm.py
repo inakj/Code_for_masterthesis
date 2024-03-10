@@ -19,7 +19,7 @@ class creep_deflection:
         return Ec_eff 
 
     def calculate_middle_E(self,M1,M2,Ec_eff):
-        sum_M = M1 + M2 #Denne må gjøres generell
+        sum_M = M1 + M2 
         Ec_eff_1 = Ec_eff[0]
         Ec_eff_2 = Ec_eff[1]
         Ec_mid = sum_M / (M1 / Ec_eff_1 + M2 / Ec_eff_2)
@@ -54,12 +54,12 @@ class creep_deflection:
 class shrink_deflection:
 
     def __init__(self,cement_class,material,RH,load,creep,cross_section):
-            self.eps_cd0 = self.calculate_eps_cd0(cement_class,material.fck,RH,material.fcm)
-            self.eps_cd = self.calculate_eps_cd(self.eps_cd0,cross_section.Ac,cross_section.width,cross_section.height)
-            self.eps_ca = self.calculate_eps_ca(material.fck)
-            self.eps_cs = self.calculate_strain(self.eps_cd,self.eps_ca)
-            self.curvature = self.calculate_shrink_curvature(self.eps_cs,creep.netta,cross_section.As,cross_section.Ac,cross_section.height,cross_section.d,cross_section.width)
-            self.deflection = self.calculate_deflection_with_shrink(self.curvature,load.length)
+        self.eps_cd0 = self.calculate_eps_cd0(cement_class,material.fck,RH,material.fcm)
+        self.eps_cd = self.calculate_eps_cd(self.eps_cd0,cross_section.Ac,cross_section.width,cross_section.height)
+        self.eps_ca = self.calculate_eps_ca(material.fck)
+        self.eps_cs = self.calculate_strain(self.eps_cd,self.eps_ca)
+        self.curvature = self.calculate_shrink_curvature(self.eps_cs,creep.netta,cross_section.As,cross_section.Ac,cross_section.height,cross_section.d,cross_section.width)
+        self.deflection = self.calculate_deflection_with_shrink(self.curvature,load.length)
 
     def calculate_eps_cd0(cement_class,fck,RH,fcm):
 

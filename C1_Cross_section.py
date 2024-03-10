@@ -24,6 +24,12 @@ class cross_section_parameters:
         self.As = self.calculate_As(bar_diameter,nr_bars)
         self.I = self.calculate_I(height,width)
         
+        #Pretension parameters (Table 2 in EN10138-3)
+        self.Ap = 139 
+        self.n_prestress = 7
+        self.prestress_diameter = 15.2
+        self.Sn = self.Ap / self.n_prestress # ex 4
+        self.e = self.cnom + stirrup_diameter + self.prestress_diameter / 2
 
     
     def get_c_min_b(self,bar_diameter):
