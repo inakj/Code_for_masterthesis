@@ -3,7 +3,7 @@ import numpy as np
 class cracked_concrete_prestress:
 
     def __init__(self,material,cross_section,load,phi_1,phi_2,eps_cs,delta_sigma_pr):
-        self.P0 = self.calc_prestress_force(material.Fp01k,material.fpk,cross_section.Ap,delta_sigma_pr)
+        self.P0 = self.calc_prestress_force(material.fp01k,material.fpk,cross_section.Ap,delta_sigma_pr)
         self.E_middle = self.calc_E_middle(material.Ecm,phi_1,phi_2,self.P0,cross_section.e,load.Mg_SLS,load.Mp_SLS)
         self.netta = material.Ep / self.E_middle
         self.ro = cross_section.Ap / (cross_section.width * cross_section.d)
@@ -18,8 +18,7 @@ class cracked_concrete_prestress:
 
 
     # Initial prestressing force 
-    def calc_prestress_force(self,Fp01k,fpk,Ap,delta_sigma_pr):
-        fp01k = Fp01k / Ap 
+    def calc_prestress_force(self,fp01k,fpk,Ap,delta_sigma_pr):
         self.sigma_pi= min(0.8 * fpk, 0.9 * fp01k) - delta_sigma_pr # sigma_delta_pr is loss because of relaxation
         Pmax = self.sigma_pi * Ap 
         P0 = Pmax * 10 ** -3
@@ -78,7 +77,7 @@ class cracked_concrete_prestress:
 
 
 
-       
+
 
     
 

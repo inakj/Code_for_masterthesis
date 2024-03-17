@@ -1,9 +1,10 @@
 
 class time_dependant_losses:
 
-    def __init__(self,material,cross_section,t,creep,sigma_c_prestress,eps_cs):
+    def __init__(self,material,cross_section,t,creep,sigma_c_prestress,eps_cs,load):
         self.delta_relaxation = self.calc_delta_sigma_pr(material.fpk,material.fp01,cross_section.e,t)
         self.delta_sigma_reduction = self.calc_stress_reduction(eps_cs,material.Ep,material.Ecm,self.delta_relaxation,creep.phi,sigma_c_prestress,cross_section.Ap,cross_section.Ac,cross_section.Ic,cross_section.e) 
+        self.total_loss = self.calc_loss_percentage(load.delta_sigma_p,load.sigma_p_max)
 
 # Loss because of relaxation
     def calc_delta_sigma_pr(self,fpk: float,fp01k: float,e: float ,t = 500000) -> float:
@@ -45,3 +46,6 @@ class time_dependant_losses:
         delta_sigma_p = (eps_cs * Ep + 0.8 * delta_sigma_pr + (Ep / Ecm) * phi * sigma_c_QP) / (1 + (Ep / Ecm) * (Ap / Ac) * (1 + (Ac / Ic) * zcp ** 2) * (1 + 0.8 * phi))
         return delta_sigma_p
     
+    def calc_loss_percentage(self,delta_sigma_p,sigma_p_max):
+        loss = (delta_sigma_p * 100) / sigma_p_max
+        return loss
