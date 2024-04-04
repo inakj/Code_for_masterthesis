@@ -20,7 +20,7 @@ input_shear_reinforcement: float = 500 #mm2 / mm
 
 input_prestressed: bool = True
 
-if input_prestressed == True:
+if input_prestressed == False:
     input_nr_prestressed_bars: int = 2
     input_prestress_diameter: float = 15.2
     input_prestress_name: str = 'Y1770S7'
@@ -46,9 +46,9 @@ from E2_SLS_Crack_case_2 import Crack_control_prestressed
 from F2_SLS_deflection_case_2 import Deflection_prestressed
 from G3_SLS_uncracked_stress_case_2 import Stress_uncracked
 from G2_SLS_cracked_stress_case_2 import Stress_cracked
-from Main.G1_SLS_stress import Stress
+from G1_SLS_stress import Stress
 from G0_time_effects import time_effects
-from C2_ULS_case_2 import ULS_prestress
+from C2_ULS_case_2 import ULS_prestressed
 
 
 class beam:
@@ -57,18 +57,18 @@ class beam:
         material_instance = Material(input_concrete_class,float(input_steel_class[1:4]),input_prestress_name,input_prestress_diameter)
         cross_section_instance = Cross_section(input_width,input_height,input_nr_bars,input_bar_diameter,input_stirrup_diameter,input_exposure_class,input_prestress_diameter,input_nr_prestressed_bars,material_instance)
         load_instance = Load_properties(input_distributed_selfload,input_distributed_liveload,input_beam_length,material_instance,cross_section_instance)
-        creep_instance = Creep_number(cross_section_instance,material_instance,input_selfload_application,input_liveload_application,input_RH,input_cement_class,input_width,input_height)
-        Deflection_instance_1 = Deflection(cross_section_instance,material_instance,load_instance,creep_instance,input_percent_longlasting_liveload,input_beam_length,input_RH,input_cement_class,input_width,input_height)
+        creep_instance = Creep_number(cross_section_instance,material_instance,input_selfload_application,input_liveload_application,input_RH,input_cement_class)
+        Deflection_instance_1 = Deflection(cross_section_instance,material_instance,load_instance,creep_instance,input_percent_longlasting_liveload,input_beam_length,input_RH,input_cement_class)
 
         if input_prestressed == True:
             
-            stress_uncracked_instance = Stress_uncracked(material_instance,cross_section_instance,load_instance,input_width,input_height)
+            stress_uncracked_instance = Stress_uncracked(material_instance,cross_section_instance,load_instance)
             time_effect_instance_2 = time_effects(material_instance,cross_section_instance,creep_instance,stress_uncracked_instance,Deflection_instance_1,load_instance)
-            Deflection_instance_2 = Deflection_prestressed(cross_section_instance,material_instance,load_instance,creep_instance,input_percent_longlasting_liveload,input_beam_length,input_RH,input_cement_class,input_width,input_height,time_effect_instance_2)
-            stress_cracked_instance = Stress_cracked(material_instance,cross_section_instance,load_instance,input_width,Deflection_instance_2,time_effect_instance_2,creep_instance)
+            Deflection_instance_2 = Deflection_prestressed(cross_section_instance,material_instance,load_instance,creep_instance,input_percent_longlasting_liveload,input_beam_length,input_RH,input_cement_class,time_effect_instance_2)
+            stress_cracked_instance = Stress_cracked(material_instance,cross_section_instance,load_instance,Deflection_instance_2,time_effect_instance_2,creep_instance)
             Stress_instance_2 = Stress(material_instance,Deflection_instance_2,stress_uncracked_instance,stress_cracked_instance,load_instance,time_effect_instance_2)
-            ULS_instance_2 = ULS_prestress(material_instance,load_instance,cross_section_instance,input_width,time_effect_instance_2)
-            reinforcement_instance_2 = Reinforcement_control_prestressed(cross_section_instance,material_instance,load_instance,input_shear_reinforcement,input_width,ULS_instance_2)
+            ULS_instance_2 = ULS_prestressed(material_instance,load_instance,cross_section_instance,time_effect_instance_2)
+            reinforcement_instance_2 = Reinforcement_control_prestressed(cross_section_instance,material_instance,load_instance,ULS_instance_2,input_shear_reinforcement)
             #crack_instance_2 = Crack_control_prestressed(cross_section_instance,load_instance,material_instance,input_exposure_class,creep_instance,time_effect_instance_2,input_width,Stress_instance_2,input_prestress_diameter)
 
             self.M_control = self.control_M(ULS_instance_2)
@@ -95,7 +95,7 @@ class beam:
 
     def control_M(self,ULS):
         if ULS.M_control == True:
-            return f'Moment capacity is suifficient'
+            return f'Moment capacity is suifficient and the utilization degree is',{ULS.M_utilization}
         else:
             return f'Moment capacity is not suifficient'
 

@@ -1,7 +1,7 @@
 
 import numpy as np
 
-class ULS_prestress:
+class ULS_prestress_and_non:
     ''' Class to contain all relevant ultimate limit state (ULS) controls for prestressed cross section 
     with ordinary reinforcement in top. All calculations are done according to the standard 
     NS-EN 1992-1-1:2004 (abbreviated to EC2).

@@ -6,7 +6,7 @@ class Cross_section:
     '''Class to contain cross section properties used in calculations.
     All calculations are done according to the standard NS-EN 1992-1-1:2004 (abbreviated to EC2)
     '''
-    def __init__(self,width: float, height: float, nr_bars: int, bar_diameter: float, 
+    def __init__(self, width: float, height: float, nr_bars: int, bar_diameter: float, 
                  stirrup_diameter: float, exposure_class: str, prestress_diameter: float,
                  nr_prestressed_bars: int, material):
         '''Args:
@@ -32,7 +32,8 @@ class Cross_section:
         '''
         self.width = width
         self.height = height
-        self.Ac = width * height
+        self.Ac: float = width * height
+        self.Ic: float = width * height ** 3 / 12
         self.c_min_b = self.get_c_min_b(bar_diameter)
         self.c_min_dur = self.get_c_min_dur(exposure_class,self.c_min_b)
         self.cnom = self.calculate_cnom(self.c_min_b,self.c_min_dur)
@@ -40,7 +41,7 @@ class Cross_section:
         self.d = self.calculate_d(height,self.cnom,bar_diameter,stirrup_diameter)
         self.e = self.calculate_e(self.cnom,stirrup_diameter,prestress_diameter)
         self.Ap = self.calculate_Ap(nr_prestressed_bars,material.Ap_strand)
-        self.Ic = width * height ** 3 / 12
+        
 
     def get_c_min_b(self,bar_diameter: float)-> float:
         ''' Function that finds c_min_b accordning to EC2 table NA.4.2, assumed only simple bars.

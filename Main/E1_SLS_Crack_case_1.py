@@ -20,7 +20,7 @@ class Crack_control:
             k_c(float):  factor that take into consideration the ratio between cnom and cmin,dur
             crack_width(float):  limit value of crack width [mm]
             alpha(float):  factor for calculating reinforcment stress
-            sigma(float):  reinforcement stress [N/mm2]
+            sigma_s(float):  reinforcement stress [N/mm2]
             max_bar_diameter(float):  maximum bar diameter to limit crack width [mm]
             control_bar_diameter(boolean):  control of bar diameter, return True or False
         '''
@@ -28,7 +28,7 @@ class Crack_control:
         self.crack_width = self.get_limit_value(exposure_class,self.k_c)
         self.Ec_middle = self.calculate_E_middle(material.Ecm,creep_number.phi_selfload,creep_number.phi_liveload,load.M_SLS,load.Mg_SLS,load.Mp_SLS)
         self.alpha = self.calculate_alpha(material.Es,self.Ec_middle,cross_section.As,cross_section.width,cross_section.d)
-        self.sigma_p = self.calculate_reinforcement_stress(self.alpha,cross_section.width,cross_section.d,load.M_SLS,self.Ec_middle,material.Es,cross_section.As)
+        self.sigma_s = self.calculate_reinforcement_stress(self.alpha,cross_section.width,cross_section.d,load.M_SLS,self.Ec_middle,material.Es,cross_section.As)
         self.max_bar_diameter  = self.calculate_maximal_bar_diameter(self.crack_width,self.sigma_p)
         self.control_bar_diameter = self.control_of_bar_diameter(bar_diameter,self.max_bar_diameter)
         

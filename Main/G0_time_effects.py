@@ -6,17 +6,17 @@ class time_effects:
     All calculations are done according to the standard
     NS-EN 1992-1-1:2004 (abbreviated to EC2).
     '''
-    def __init__(self, material, cross_section, creep_number, uncracked, deflection, load):
+    def __init__(self, material, cross_section, creep_number, stress_uncracked, deflection, load):
         '''Args:
             material(class):  class that contain all material properties
             cross_section(class):  class that contain all cross-section properties
             creep_number(class):  class that contain creep number calculation
-            uncracked_concrete(class): class that contain control of prestressed uncracked cross section
+            Stress_uncracked(class): class that contain control of prestressed uncracked cross section
             deflection(class):  class that contain all calculations for deflection
             load(class):  class that contain all load properties 
         '''
         self.delta_relaxation = self.calculate_delta_sigma_pr(material.fpk,material.fp01k,cross_section.e)
-        self.loss = self.calculate_stress_reduction(deflection.eps_cs,material.Ep,material.Ecm,self.delta_relaxation,creep_number.phi_selfload,uncracked.sigma_c_uncracked[2],
+        self.loss = self.calculate_stress_reduction(deflection.eps_cs,material.Ep,material.Ecm,self.delta_relaxation,creep_number.phi_selfload,stress_uncracked.sigma_c_uncracked[2],
                                                cross_section.Ap,cross_section.Ac,cross_section.Ic,cross_section.e) 
         self.loss_percentage = self.calculate_loss_percentage(self.loss,load.sigma_p_max)
     
@@ -24,7 +24,7 @@ class time_effects:
     def calculate_delta_sigma_pr(self, fpk: float, fp01k: float, t = 500000) -> float:
         """
         Calculation of loss in stress because of relaxation, where the steel is exposed to constant
-        strain for long time, accroding to EC2 3.3.2. Assumed class 2: low relaxation
+        strain for long time, according to EC2 3.3.2(7). Assumed class 2: low relaxation
         Args:
             fpk(float):  characteristic strength for prestress, from material class [N/mm2]
             fp01k(float):  0.1% limit of strength for prestress, from material class [N/mm2]

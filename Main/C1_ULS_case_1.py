@@ -31,6 +31,8 @@ class ULS_nonprestressed:
         self.V_Rd = self.calculate_V_Rd(cross_section.d,cross_section.As,cross_section.width,material.fcd,material.gamma_concrete,material.fck) 
         self.M_control = self.control_of_M_cap(self.M_Rd,load.M_ULS)
         self.V_control = self.control_of_V_cap(self.V_Rd,load.V_ULS,Asw,cross_section.d,material.fyd)
+        self.M_utilization = self.control_utilization_M(self.M_Rd,load.M_ULS)
+        self.V_utilization = self.control_utilization_V(self.V_Rd,load.V_ULS)
     
     def calculate_alpha(self, eps_cu3: float, eps_yd: float, As: float, Es: float, fcd: float,
                         width: float, d: float, fyd: float, lambda_factor: float, netta: float)-> float:
@@ -143,4 +145,15 @@ class ULS_nonprestressed:
                 return False
         
     
-   
+    def control_utilization_M(self,M_Rd,M_Ed):
+        '''
+        '''
+        utilization = (M_Ed / M_Rd) * 100
+        return utilization
+    
+    def control_utilization_V(self,V_Rd,V_Ed):
+        '''
+        '''
+        utilization = (V_Ed / V_Rd) * 100
+        return utilization
+    

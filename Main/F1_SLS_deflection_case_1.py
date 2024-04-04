@@ -9,7 +9,7 @@ class Deflection:
     book "Betongkonstruksjoner; beregning og dimensjonering etter Eurocode 2 by Svein Ivar Sørensen.
     '''
 
-    def __init__(self, cross_section, material, load, creep_number, factor: float, length: float,
+    def __init__(self, cross_section, material, load, creep, factor: float, length: float,
                  RH: int, cement_class: str):
         '''Args:
             cross_section(class):  class that contain all cross-section properties
@@ -31,7 +31,7 @@ class Deflection:
             EI_2(float):  bending stiffnes for cracked cross section [Nmm2]
             deflection_cracked(float):  deflection including creep for cracked cross section [mm]
             M_cr(float):  crack moment [kNm]
-            control_Mcr(float)  True if cracked cross section. False if uncracked cross section
+            control_Mcr(bool)  True if cracked cross section. False if uncracked cross section
             eps_cd(float):  shrinkage strain due to drying over time
             eps_ca(float):  autogenous shrinkage strain
             eps_cs(float):  total shrinkage strain
@@ -42,7 +42,7 @@ class Deflection:
             if the deflection is to big
         
         '''
-        self.Ec_middle = self.calculate_E_middle(material.Ecm,creep_number.phi_selfload,creep_number.phi_liveload,load.M_SLS,load.Mg_SLS,load.Mp_SLS)
+        self.Ec_middle = self.calculate_E_middle(material.Ecm,creep.phi_selfload,creep.phi_liveload,load.M_SLS,load.Mg_SLS,load.Mp_SLS)
         self.netta = self.calculate_netta(material.Es,self.Ec_middle)
         self.ro = self.calculate_ro(cross_section.As,cross_section.width,cross_section.d)
         self.alpha_uncracked = self.calculate_alpha_uncracked(self.netta,cross_section.Ac,cross_section.height,cross_section.As,cross_section.d)
@@ -347,7 +347,7 @@ class Deflection:
         Returns: 
             total_deflection(float):  deflection including both shrinkage and creep, with tension stiffening [mm]
         '''
-        beta = 0.5 
+        beta = 0.
         if control == True: 
             zeta = 1 - beta * (M_cr / M_Ed) ** 2
         elif control == False: 

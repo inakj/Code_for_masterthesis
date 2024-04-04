@@ -7,8 +7,7 @@ class Creep_number:
     t is assumed 50 years = 18263 days
     '''
     
-    def __init__(self, cross_section, material, t0_self: int, t0_live: int, RH: int, cement_class: int,
-                  width: float, height: float, t: int = 18263):
+    def __init__(self, cross_section, material, t0_self: int, t0_live: int, RH: int, cement_class: int, t: int = 18263):
         '''Args: 
             cross_section(class):  class that contain all cross section properties
             material(class):  class that conatin all material properties
@@ -31,7 +30,7 @@ class Creep_number:
             phi_self(float):  creep number for selfload
             phi_live(float):  creep number for liveload
         '''
-        self.h0 = self.calculate_h0(cross_section.Ac,width,height)
+        self.h0 = self.calculate_h0(cross_section.Ac,cross_section.width,cross_section.height)
         self.beta_fcm = self.calculate_beta_fcm(material.fcm)
         self.phi_RH = self.calculate_phi_RH(self.h0,material.fcm,RH)
         self.t0_adjusted_self = self.calculate_t0_adjusted(t0_self,cement_class)

@@ -1,7 +1,7 @@
 
 import numpy as np
 
-class ULS_prestress:
+class ULS_prestressed:
     ''' Class to contain all relevant ultimate limit state (ULS) controls for prestressed cross section.
     All calculations are done according to the standard NS-EN 1992-1-1:2004 (abbreviated to EC2).
     '''
@@ -28,6 +28,8 @@ class ULS_prestress:
         self.V_Rd = self.calc_shear_capacity(cross_section.d,cross_section.As,cross_section.width,cross_section.Ac,material.fcd,material.gamma_concrete,
                                              material.fck,load.P0,material.gamma_0_9,time_effect.loss)
         self.V_control = self.control_V(self.V_Rd,load.V_ULS)
+        self.M_utilization = self.control_utilization_M(self.M_Rd,load.M_ULS)
+        self.V_utilization = self.control_utilization_V(self.V_Rd,load.V_ULS)
     
     def calculate_strain_diff(self, sigma_p: float, Ep: int, loss: float)-> float:
         ''' Function that calculates difference in strain because of losses
@@ -149,6 +151,17 @@ class ULS_prestress:
             return False
     
 
-
+    def control_utilization_M(self,M_Rd,M_Ed):
+        '''
+        '''
+        utilization = (M_Ed / M_Rd) * 100
+        return utilization
+    
+    def control_utilization_V(self,V_Rd,V_Ed):
+        '''
+        '''
+        utilization = (V_Ed / V_Rd) * 100
+        return utilization
+    
     
 

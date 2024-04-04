@@ -9,7 +9,7 @@ class Crack_control_prestressed:
     All calculations are done according to the standard NS-EN 1992-1-1:2004 (abbreviated to EC2) and the 
     book "Betongkonstruksjoner; beregning og dimensjonering etter Eurocode 2 by Svein Ivar Sørensen.
     '''
-    def __init__(self, cross_section, load, material, exposure_class, creep_number, time_effect,
+    def __init__(self, cross_section, load, material, exposure_class: str, creep_number, time_effect,
                   stress, prestress_bar_diameter: float):
         '''Args:
             cross_section(class):  class that contain all cross-section properties

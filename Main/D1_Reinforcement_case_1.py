@@ -9,7 +9,7 @@ class Reinforcement_control:
     All calculations are done according to the standard NS-EN 1992-1-1:2004 (abbreviated to EC2) and the 
     book "Betongkonstruksjoner; beregning og dimensjonering etter Eurocode 2 by Svein Ivar Sørensen.
     '''
-    def __init__(self, cross_section, material, load, ULS_control, Asw: float):
+    def __init__(self, cross_section, material, load, ULS_nonprestressed, Asw: float):
         '''Args: 
             cross_section(class):  class that contain all cross-section properties
             material(class):  class that contain all material properties
@@ -24,7 +24,7 @@ class Reinforcement_control:
             A_control(boolean):  Control of reinforcement, return True or False
             Asw_control(boolean):  Control of shear reinforcement, return True or False
         '''
-        self.As_necessary = self.calculate_necessary_reinforcement(load.M_ULS,cross_section.d,material.fyd,material.lambda_factor,ULS_control.alpha)
+        self.As_necessary = self.calculate_necessary_reinforcement(load.M_ULS,cross_section.d,material.fyd,material.lambda_factor,ULS_nonprestressed.alpha)
         self.As_min = self.calculate_As_min(material.fctm,material.fyk,cross_section.width,cross_section.d)
         self.As_max = self.calculate_As_max(cross_section.Ac)
         self.control = self.control_reinforcement(cross_section.As,self.As_max,self.As_min,self.As_necessary)

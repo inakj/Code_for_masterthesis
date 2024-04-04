@@ -31,8 +31,8 @@ class Material:
         self.gamma_liveload: float = 1.5
         # Materialfactors according to EC2 NA.2.4.2.4(1)
         self.gamma_concrete: float = 1.5
-        self.gamma_steel: float = 1.15
-        self.gamma_rebar: float = 1.15
+        self.gamma_reinforcement: float = 1.15
+        self.gamma_prestressed_reinforcement: float = 1.15
 
     
     # CONCRETE PARAMETERS
@@ -55,7 +55,7 @@ class Material:
         self.lambda_factor = self.calculate_lambda(self.fck)
         self.netta_factor = self.calculate_netta(self.fck)
 
-        # Design compressive- and tension strength according to EC2 NA.3.1.6
+        # Design compressive- and tension strength coefficients fraccording to EC2 NA.3.1.6
         self.alfa_cc: float = 0.85 
         self.alfa_ct: float = 0.85  
         # Design compression strength according to EC2 3.1.6(1)
@@ -63,21 +63,22 @@ class Material:
         # Design tension strength according to EC2 3.1.6(2)
         self.fctd: float = self.fctk_005 * self.alfa_ct / self.gamma_concrete 
     
-    # STEEL PARAMTERS
+    # ORDINARY REINFORCEMENT PARAMETERS
         
-        self.fyk: float = self.get_fyk(steel_class)
-        self.Es: float = self.get_Es()
+        self.fyk = self.get_fyk(steel_class)
+        self.Es = self.get_Es()
 
         # Characteristic yield strain
         self.eps_yk: float = self.fyk / self.Es
 
         # Design tension strength according to EC2 3.2.7(2)
-        self.fyd: float = self.fyk / self.gamma_steel
+        self.fyd: float = self.fyk / self.gamma_reinforcement
 
         # Design yield strain
-        self.eps_yd: float = self.fyd / self.Es
+        self.eps_yd: float = self.fyd / self.Es 
     
-        # Prestress parameters
+    # PRESTRESSED REINFORCEMENT PARAMETERS
+       
         self.Ep = self.get_Ep()
         self.index_prestress = self.get_index_prestress(prestress_name,prestress_diameter)   
         self.fpk = self.get_fpk()
@@ -140,7 +141,7 @@ class Material:
     def get_fck_cube(self)-> int:
         ''' Get compressive strength fck_cube based on index number and table 3.1 in EC2.
         Returns:
-            fck_cube(int):  [N/mm2]
+            fck_cube(int):  Cubic compressive strength [N/mm2]
         '''
         fck_cube_vektor = [15, 20, 25, 30, 37, 45, 50, 55, 60, 67, 75, 85, 95, 105]
         return fck_cube_vektor[self.index]
@@ -164,7 +165,7 @@ class Material:
     def get_fctk_005(self)-> float:
         ''' Get tension strength fct_005 based on index number and table 3.1 in EC2.
         Returns:
-            fctk_005(float):  0.05 % concrete characteristic acial tension strength [N/mm2]
+            fctk_005(float):  0.05 % concrete characteristic axial tension strength [N/mm2]
         '''
         fctk_005_vektor = [1.1, 1.3, 1.5, 1.8, 2.0, 2.2, 2.5, 2.7, 2.9, 3.0, 3.1, 3.2, 3.4, 3.5]
         return fctk_005_vektor[self.index]
@@ -172,7 +173,7 @@ class Material:
     def get_fctk_095(self)-> float:
         ''' Get tension strength fctk_095 based on index number and table 3.1 in EC2.
         Returns:
-            fctk_095(float):  0.95 % concrete characteristic acial tension strenght [N/mm2]
+            fctk_095(float):  0.95 % concrete characteristic axial tension strenght [N/mm2]
         '''
         fctk_095_vektor = [2.0, 2.5, 2.9, 3.3, 3.8, 4.2, 4.6, 4.9, 5.3, 5.5, 5.7, 6.0, 6.3, 6.6]
         return fctk_095_vektor[self.index]
@@ -422,18 +423,18 @@ class Material:
             return Fp01k[self.index_prestress]
     
     def calculate_fp01k(self,Fp01k:float ,Ap:float)-> float:
-        '''Calculate characteristic 0.1% proof tension for prestress.
+        '''Calculate characteristic 0.1% proof tension for prestress
         Args:
             Fp01k(float): characteristic 0.1% proof force [kN]
             Ap(float): cross sectional area for prestress [mm2]
         Returns:
-            fp01k(float): characteristic 0.1% proof force [N/mm2] or 0 if the index == None
+            fp01k(float): characteristic 0.1% proof stress [N/mm2] or 0 if the index == None
         '''
         if self.index_prestress == None:
             return 0
         else: 
             fp01k = Fp01k * 10 ** 3 / Ap
-            self.fpd: float = fp01k / self.gamma_steel
+            self.fpd: float = fp01k / self.gamma_prestressed_reinforcement
             return fp01k
     
     

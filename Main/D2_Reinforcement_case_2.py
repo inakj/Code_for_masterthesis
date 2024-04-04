@@ -13,7 +13,6 @@ class Reinforcement_control_prestressed:
             cross_section(class):  class that contain all cross-section properties
             material(class):  class that contain all material properties
             load(class):  class that contain all load properties
-            alpha(float):  Compression-zone-height factor for cross section, from ULS control class
             ULS_control(class):  class that contain all ULS controls
             Asw(float):  shear reinforcement area, defined by user [mm2/mm]
         Returns: 
@@ -22,7 +21,7 @@ class Reinforcement_control_prestressed:
             Ap_necessary(float):  area of prestress reinforcement necessary [mm2]
             A_control(boolean):  Control of prestress reinforcement area, return True or False
         '''
-        self.As = self.calculate_As_min(material.fctm,material.fyk,cross_section.width,cross_section.d)
+        #self.As = self.calculate_As_min(material.fctm,material.fyk,cross_section.width,cross_section.d)
         self.Asw_control = self.control_reinforcement_shear(material.fck,material.fyk,cross_section.width,Asw)
         self.Ap_necessary= self.calculate_prestress_reinforcement(load.M_ULS,cross_section.d,material.fpd,material.lambda_factor,ULS_prestressed.alpha)
         self.control = self.control_prestress_reinforcement(self.Ap_necessary,cross_section.Ap)
