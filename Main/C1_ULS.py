@@ -1,7 +1,7 @@
 
 import numpy as np
 
-class ULS_nonprestressed:
+class ULS:
     ''' Class to contain all relevant ultimate limit state (ULS) controls. 
     Calculations are based on following assumptions from EC2 6.1(2)P:
     - Full bond between concrete and reinforcement
@@ -26,11 +26,11 @@ class ULS_nonprestressed:
             V_control(boolean):  Control of shear force capacity
         '''
         self.alpha = self.calculate_alpha(material.eps_cu3,material.eps_yd,cross_section.As,
-            material.Es,material.fcd,cross_section.width,cross_section.d,material.fyd,material.lambda_factor,material.netta)
-        self.M_Rd = self.calculate_M_Rd(self.alpha,material.fcd,cross_section.width,cross_section.d,material.lambda_factor,material.netta) 
-        self.V_Rd = self.calculate_V_Rd(cross_section.d,cross_section.As,cross_section.width,material.fcd,material.gamma_concrete,material.fck) 
+            material.Es,material.fcd,cross_section.width,cross_section.d_1,material.fyd,material.lambda_factor,material.netta)
+        self.M_Rd = self.calculate_M_Rd(self.alpha,material.fcd,cross_section.width,cross_section.d_1,material.lambda_factor,material.netta) 
+        self.V_Rd = self.calculate_V_Rd(cross_section.d_1,cross_section.As,cross_section.width,material.fcd,material.gamma_concrete,material.fck) 
         self.M_control = self.control_of_M_cap(self.M_Rd,load.M_ULS)
-        self.V_control = self.control_of_V_cap(self.V_Rd,load.V_ULS,Asw,cross_section.d,material.fyd)
+        self.V_control = self.control_of_V_cap(self.V_Rd,load.V_ULS,Asw,cross_section.d_1,material.fyd,material.fcd,cross_section.width,material.fck)
         self.M_utilization = self.control_utilization_M(self.M_Rd,load.M_ULS)
         self.V_utilization = self.control_utilization_V(self.V_Rd,load.V_ULS)
     
@@ -53,18 +53,18 @@ class ULS_nonprestressed:
         Returns:
             alpha(float):  Compression-zone-height factor for nonprestressed cross section
         '''
-        alpha_bal = eps_cu3 / (eps_cu3 + eps_yd)
-        Ap_balanced = lambda_factor * netta * alpha_bal * width * d * fcd / fyd 
-        if As <= Ap_balanced:  # --> Under-reinforced
+        self.alpha_bal = eps_cu3 / (eps_cu3 + eps_yd)
+        self.As_balanced = lambda_factor * netta * self.alpha_bal * width * d * fcd / fyd 
+        if As <= self.As_balanced:  # --> Under-reinforced
             alpha = (fyd * As)/ (lambda_factor * netta * fcd * width * d)
-        elif As > Ap_balanced:  # --> Over-reinforced
+        elif As > self.As_balanced:  # --> Over-reinforced
             # Using abc-formula
             a = lambda_factor * netta * fcd * width * d
             b = eps_cu3 * Es * As
             c = - eps_cu3 * Es * As
             alpha = max((- b + np.sqrt(b ** 2 - 4 * a * c)) / (2 * a),
-                        - b - np.sqrt(b ** 2 - 4 * a * c) / (2 * a))
-        return alpha
+                        (- b - np.sqrt(b ** 2 - 4 * a * c)) / (2 * a))
+        return min(1,alpha)
 
     def calculate_M_Rd(self, alpha: float, fcd: float, width: float, d: float, lambda_factor: float,
                        netta: float)-> float:
@@ -80,8 +80,8 @@ class ULS_nonprestressed:
         Returns: 
             M_Rd(float):  moment capacity [kNm]
         '''
-        M_Rd = lambda_factor * netta * alpha * (1 - 0.5 * lambda_factor * alpha) * fcd * width * d ** 2
-        return M_Rd
+        M_Rd = lambda_factor * netta * alpha * (1 - 0.5 * lambda_factor * alpha) * fcd * width * d ** 2 
+        return M_Rd *  10 ** -6
     
     
     def calculate_V_Rd(self, d: float, As: float, width: float, fcd: float, gamma_concrete: float, 
@@ -106,8 +106,8 @@ class ULS_nonprestressed:
         v_min = 0.035 * k ** (3/2) * fck ** (0.5)
         V_Rd_c = (CRd_c * k * (100 * ro_l * fck) ** (1/3) + k_1 * sigma_cp) * width * d
         V_Rd_min = (v_min + k_1 * sigma_cp) * width * d
-        V_Rd = max(V_Rd_c, V_Rd_min)
-        return V_Rd * 10 ** 3
+        V_Rd = max(V_Rd_c, V_Rd_min) * 10 ** -3
+        return V_Rd 
     
     def control_of_M_cap(self, M_Rd: float, M_Ed: float)-> bool:
         ''' Function that control moment capacity compared with design moment
@@ -122,7 +122,7 @@ class ULS_nonprestressed:
         else: 
             return False
     
-    def control_of_V_cap(self, V_Rd: float, V_Ed: float, Asw: float, d: float, fyd: float)-> bool:
+    def control_of_V_cap(self, V_Rd: float, V_Ed: float, Asw: float, d: float, fyd: float, fcd: float, width: float, fck: float)-> bool:
         ''' Function that control shear capacity compared with design shear force. Also, if the 
         capacity is not suifficent, the function checks if the shear capacity is good enough according 
         to EC2 6.2.3(3) where there is calculation-based need for shear reinforcement. 
@@ -138,22 +138,26 @@ class ULS_nonprestressed:
         if V_Rd >= V_Ed:
             return True
         else:
-            VRd_s = Asw * 0.9 * d * fyd * 10 ** -3
-            if VRd_s >= V_Ed:
-                return True
+            alpha_cw = 1
+            v = 0.6 * (1 - fck / 250)
+            self.V_Rds = min(Asw * 0.9 * d * fyd * 10 ** -3, alpha_cw * v * width * 0.9 * d * fcd * 10 ** -3)
+            if self.V_Rds >= V_Ed:
+                return True 
             else:
                 return False
-        
     
     def control_utilization_M(self,M_Rd,M_Ed):
         '''
         '''
-        utilization = (M_Ed / M_Rd) * 100
-        return utilization
+        utilization = (M_Rd / M_Ed) * 100
+        return round(utilization,1)
     
     def control_utilization_V(self,V_Rd,V_Ed):
         '''
         '''
-        utilization = (V_Ed / V_Rd) * 100
-        return utilization
+        if V_Rd < V_Ed:
+            utilization = (self.V_Rds/ V_Rd) * 100
+        else:
+            utilization = (V_Rd / V_Ed) * 100
+        return round(utilization,1)
     

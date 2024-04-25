@@ -21,16 +21,17 @@ class Crack_control:
             crack_width(float):  limit value of crack width [mm]
             alpha(float):  factor for calculating reinforcment stress
             sigma_s(float):  reinforcement stress [N/mm2]
-            max_bar_diameter(float):  maximum bar diameter to limit crack width [mm]
+            max_bar_diameter(float):  maximum bar diameter to limit crack width [mm
             control_bar_diameter(boolean):  control of bar diameter, return True or False
         '''
         self.k_c = self.calculate_kc(cross_section.cnom,cross_section.c_min_dur)
         self.crack_width = self.get_limit_value(exposure_class,self.k_c)
         self.Ec_middle = self.calculate_E_middle(material.Ecm,creep_number.phi_selfload,creep_number.phi_liveload,load.M_SLS,load.Mg_SLS,load.Mp_SLS)
-        self.alpha = self.calculate_alpha(material.Es,self.Ec_middle,cross_section.As,cross_section.width,cross_section.d)
-        self.sigma_s = self.calculate_reinforcement_stress(self.alpha,cross_section.width,cross_section.d,load.M_SLS,self.Ec_middle,material.Es,cross_section.As)
-        self.max_bar_diameter  = self.calculate_maximal_bar_diameter(self.crack_width,self.sigma_p)
+        self.alpha = self.calculate_alpha(material.Es,self.Ec_middle,cross_section.As,cross_section.width,cross_section.d_1)
+        self.sigma_s = self.calculate_reinforcement_stress(self.alpha,cross_section.width,cross_section.d_1,load.M_SLS,self.Ec_middle,material.Es,cross_section.As)
+        self.max_bar_diameter  = self.calculate_maximal_bar_diameter(self.crack_width,self.sigma_s)
         self.control_bar_diameter = self.control_of_bar_diameter(bar_diameter,self.max_bar_diameter)
+        self.utilization = self.get_utilization_degree(bar_diameter,self.max_bar_diameter)
         
     def calculate_kc(self, cnom: float, c_min_dur: float)-> float: 
         ''' Function that calculate the factor kc according to EC2 NA.7.3.1
@@ -95,7 +96,7 @@ class Crack_control:
         netta = Es / Ec_middle 
         ro = As / (width * d)
         alpha = np.sqrt((netta * ro) ** 2 + 2 * netta * ro) - netta * ro
-        return alpha
+        return min(1,alpha)
 
     def calculate_reinforcement_stress(self, alpha: float, width: float, d: float, M_Ed: float, Ec_middle: float, 
                                         Es: int, As: float)-> float:
@@ -115,10 +116,14 @@ class Crack_control:
         Ic2 = (width * (alpha * d) ** 3) / 3 
         Is2 = As * ((1 - alpha) * d) ** 2
         Ei_2 = Ec_middle * Ic2 + Es * Is2
-        sigma_p = Es * (M_Ed * 10 ** 6 * (1 - alpha) * d)/(Ei_2)
-        return sigma_p
+        sigma = Es * (M_Ed * 10 ** 6 * (1 - alpha) * d)/(Ei_2)
+        if sigma < 160:
+            sigma = 160
+        elif sigma > 450:
+            sigma = None
+        return sigma
 
-    def calculate_maximal_bar_diameter(self, w_max: float , sigma_p: float)-> float:
+    def calculate_maximal_bar_diameter(self, w_max: float , sigma: float)-> float:
         ''' Function that calculates max bar diameter according to EC2 table 7.2N, using 
         interpolation in two directions. The bar diameters are implemented as a matrix Ø , the reinforcement 
         tension as vector a, and crack width as vector w.
@@ -128,18 +133,21 @@ class Crack_control:
         Returns:
             max_bar_diameter(float):  maximum bar diameter to limit crack width [mm]
         '''
-        Ø = ([[40, 32, 20, 16, 12, 10, 8, 6],[32, 25, 16, 12, 10, 8, 6, 5],[25, 16, 12, 8, 6, 5, 4, 0]])  #  Bar diameter matrix
-        a = [160, 200, 240, 280, 320, 360, 400, 450]  #  Reinforcement tension vector
-        w = [0.4, 0.3, 0.2]  #  Crack width vector
+        if sigma == None:
+            max_bar_diameter = None
+        else:
+            Ø = ([[40, 32, 20, 16, 12, 10, 8, 6],[32, 25, 16, 12, 10, 8, 6, 5],[25, 16, 12, 8, 6, 5, 4, 0]])  #  Bar diameter matrix
+            a = [160, 200, 240, 280, 320, 360, 400, 450]  #  Reinforcement tension vector
+            w = [0.4, 0.3, 0.2]  #  Crack width vector
         
-        for k in range(0,len(w)-1,1):
-            if w[k] >= w_max > w[k+1]:
-                for i in range(len(a) - 1):
-                    x1 = (Ø[k][i+1]-Ø[k][i])/(w[k]-w[k+1])*(w_max-w[k+1])+ Ø[k][i] 
-                    x2 = (Ø[k+1][i+1]-Ø[k+1][i])/(w[k]-w[k+1])*(w_max-w[k+1])+ Ø[k+1][i]
-                    if a[i] <= sigma_p < a[i + 1]:
-                        max_bar_diameter = (x2-x1)/(a[i+1]-a[i])*(sigma_p-a[i]) + x1
-                        return max_bar_diameter
+            for k in range(0,len(w)-1,1):
+                if w[k] >= w_max > w[k+1]:
+                    for i in range(len(a) - 1):
+                        x1 = Ø[k][i] * (w[k+1]-w_max)/(w[k+1]-w[k]) + Ø[k+1][i]* (w_max-w[k])/(w[k+1]-w[k]) 
+                        x2 = Ø[k][i+1] * (w[k+1]-w_max)/(w[k+1]-w[k]) + Ø[k+1][i+1]* (w_max-w[k])/(w[k+1]-w[k]) 
+                        if a[i] <= sigma < a[i + 1]:
+                            max_bar_diameter = x1 * (a[i+1]-sigma) / (a[i+1]-a[i]) + x2 * (sigma-a[i]) / (a[i+1] - a[i])
+        return max_bar_diameter
             
     def control_of_bar_diameter(self, bar_diameter: float, max_bar_diameter: float)-> bool:
         ''' Control of max bar diameter compared to given bar_diameter
@@ -149,9 +157,20 @@ class Crack_control:
         Returns:
             True if given reinforcement diameter is suifficent, or False if its not suifficent
         '''
-        if bar_diameter > max_bar_diameter:
+        if max_bar_diameter == None:
+            return (f'The stress is bigger that the maximum, and the crack control could not be executed')
+        elif bar_diameter > max_bar_diameter:
             return False
         else: 
             return True
+        
+    def get_utilization_degree(self,bar_diameter,max_bar_diameter):
+        '''
+        '''
+        if max_bar_diameter == None:
+            return (f'The stress is bigger that the maximum, and the crack utilization could not be executed')
+        else:
+            utilization = (max_bar_diameter / bar_diameter) * 100
+            return round(utilization,1)
         
     

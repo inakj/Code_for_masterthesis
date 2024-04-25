@@ -41,7 +41,7 @@ class Creep_number:
         self.phi_0_live = self.calculate_phi_0(self.phi_RH,self.beta_fcm,self.beta_t0_live)
         self.beta_c = self.calculate_beta_c(t0_self,t,RH,self.h0,material.fcm)
         self.phi_selfload = self.calcualte_phi(self.phi_0_self,self.beta_c)
-        self.phi_liveload = self.calcualte_phi(self.phi_0_self,self.beta_c)
+        self.phi_liveload = self.calcualte_phi(self.phi_0_live,self.beta_c)
 
     def calculate_h0(self, Ac: float, width: float, height: float)-> float: 
         ''' Function that calculates effective cross section thickness 

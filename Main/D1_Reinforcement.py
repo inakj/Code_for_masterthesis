@@ -19,16 +19,20 @@ class Reinforcement_control:
 
         Returns: 
             As_necessary(float):  Necessary reinforcement [mm2]
-            As_min(float):  Minimum reinforcement [mm2]
+            As(float):  Minimum reinforcement [mm2]
             As_max(float): Maximum reinforcement [mm2]
             A_control(boolean):  Control of reinforcement, return True or False
             Asw_control(boolean):  Control of shear reinforcement, return True or False
         '''
-        self.As_necessary = self.calculate_necessary_reinforcement(load.M_ULS,cross_section.d,material.fyd,material.lambda_factor,ULS_nonprestressed.alpha)
-        self.As_min = self.calculate_As_min(material.fctm,material.fyk,cross_section.width,cross_section.d)
+        self.As_necessary = self.calculate_necessary_reinforcement(load.M_ULS,cross_section.d_1,material.fyd,material.lambda_factor,ULS_nonprestressed.alpha)
+        self.As_min = self.calculate_As_min(material.fctm,material.fyk,cross_section.width,cross_section.d_1)
         self.As_max = self.calculate_As_max(cross_section.Ac)
-        self.control = self.control_reinforcement(cross_section.As,self.As_max,self.As_min,self.As_necessary)
+        self.control = self.control_reinforcement(cross_section.As,self.As_necessary,self.As_max,self.As_min)
         self.Asw_control = self.control_reinforcement_shear(material.fck,material.fyk,cross_section.width,Asw)
+        self.utilization = self.get_utilization_degree_As(self.As_necessary,cross_section.As)
+        self.utilization_shear = self.get_utilization_degree_Asw(self.Asw_min,Asw)
+
+
         
     
     def calculate_necessary_reinforcement(self, M_Ed: float, d: float, fyd: float, lambda_factor: float, 
@@ -82,9 +86,7 @@ class Reinforcement_control:
             As_control(boolean):  Return True if area is suifficent or False 
             if its not suifficent
         '''
-        if As > As_max:
-            return False
-        elif As < As_min or As < As_necessary:
+        if As > As_max or As < min(As_min,As_necessary):
             return False
         else: 
             return True
@@ -102,11 +104,24 @@ class Reinforcement_control:
         ro_w_min = 0.1  * np.sqrt(fck) / fyk
         alpha = 90
         b_w = width
-        Asw_min = ro_w_min * b_w * np.sin(alpha) 
-        if Asw_min < Asw:
+        self.Asw_min = ro_w_min * b_w * np.sin(alpha) 
+        if self.Asw_min < Asw:
             return True
         else:
             return False
         
+    
+    def get_utilization_degree_As(self,As_necessary,As):
+        '''
+        '''
+        utilization = (As / As_necessary) *100 
+        return round(utilization,1)
+    
+    def get_utilization_degree_Asw(self,Asw_min,Asw):
+        '''
+        '''
+        utilization = (Asw / Asw_min) * 100 
+        return round(utilization,1)
+
 
 

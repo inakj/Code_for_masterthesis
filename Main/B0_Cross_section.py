@@ -1,6 +1,6 @@
 
 import numpy as np
-import sys
+
 
 class Cross_section:
     '''Class to contain cross section properties used in calculations.
@@ -25,7 +25,8 @@ class Cross_section:
             c_min_dur(float):  smallest nominal cover because of environmental effects [mm]
             cnom(float):  nominal concrete cover [mm]
             As(float): area of reinforcement [mm2]
-            d(float):  effective height from compression edge to reinforcement center[mm]
+            d_1(float):  effective height from compression edge to reinforcement center for ordinary reinforcement[mm]
+            d_2(float):  effective height from compression edge to reinforcement center for prestressed reinforcement[mm]
             e(float):  distance from bottom to middle of prestressed reinforcement [mm]
             Ap(float):  prestressed reinforcement area in cross section [mm2]
             Ic(float):  second moment of inertia [mm4]
@@ -33,13 +34,14 @@ class Cross_section:
         self.width = width
         self.height = height
         self.Ac: float = width * height
-        self.Ic: float = width * height ** 3 / 12
+        self.Ic: float = (width * height ** 3) / 12
         self.c_min_b = self.get_c_min_b(bar_diameter)
         self.c_min_dur = self.get_c_min_dur(exposure_class,self.c_min_b)
         self.cnom = self.calculate_cnom(self.c_min_b,self.c_min_dur)
         self.As = self.calculate_As(bar_diameter,nr_bars)
-        self.d = self.calculate_d(height,self.cnom,bar_diameter,stirrup_diameter)
-        self.e = self.calculate_e(self.cnom,stirrup_diameter,prestress_diameter)
+        self.d_1 = self.calculate_d(height,self.cnom,bar_diameter,stirrup_diameter)
+        self.d_2 = self.calculate_d(height,self.cnom,prestress_diameter,stirrup_diameter)
+        self.e = self.calculate_e(self.cnom,stirrup_diameter,prestress_diameter,height)
         self.Ap = self.calculate_Ap(nr_prestressed_bars,material.Ap_strand)
         
 
@@ -117,7 +119,7 @@ class Cross_section:
         d = height - cnom - 0.5 * bar_diameter - stirrup_diameter
         return d 
  
-    def calculate_e(self,cnom: float, stirrup_diameter: float, prestress_diameter: float)-> float:
+    def calculate_e(self,cnom: float, stirrup_diameter: float, prestress_diameter: float, height:float)-> float:
         ''' Function that calculates the distance e
         Args:
             cnom(float): nominal concrete cover [mm]
@@ -126,7 +128,7 @@ class Cross_section:
         Returns:
             e(float):  distance from bottom to prestressed reinforcement [mm]
         '''
-        e = cnom + stirrup_diameter + prestress_diameter / 2
+        e = height / 2 - cnom + stirrup_diameter + prestress_diameter / 2
         return e
     
     def calculate_Ap(self,nr_prestressed_bars: int, Ap_strand: float)-> float:

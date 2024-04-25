@@ -1,6 +1,6 @@
 import numpy as np
 
-class Stress_uncracked:
+class Uncracked_stress:
 
     '''Class to contain calculation of uncracked prestressed
     cross section. All calculations are done according to the standard

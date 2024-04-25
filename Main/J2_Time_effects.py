@@ -42,7 +42,7 @@ class time_effects:
     def calculate_stress_reduction(self, eps_cs: float, Ep: float, Ecm: float, delta_sigma_pr: float, phi_selfload: float,
                               sigma_c_QP: float, Ap: float, Ac: float, Ic: float, zcp: float) -> float:
         """
-        Total time dependant stress reduction in prestress, simplfied from EC2 5.10.6(2)
+        Total time dependant stress reduction in prestress, simplfied from EC2 5.10.6(2). Tar bare for seg egenlast.
         Args:
             eps_cs(float):  total shrinkage strain, from deflection class
             Ep(int):  elasticity modulus for prestress [N/mm2]
@@ -57,7 +57,7 @@ class time_effects:
         Return:
             delta_sigma_p(float):  loss in prestress because of shrink, creep and relaxation [N/mm2]
         """
-        delta_sigma_p = (eps_cs * Ep + 0.8 * delta_sigma_pr + (Ep / Ecm) * phi_selfload * sigma_c_QP) / \
+        delta_sigma_p = (eps_cs * Ep + 0.8 * delta_sigma_pr + (Ep / Ecm) * phi_selfload * abs(sigma_c_QP)) / \
                 (1 + (Ep / Ecm) * (Ap / Ac) * (1 + (Ac / Ic) * zcp ** 2) * (1 + 0.8 * phi_selfload))
         return delta_sigma_p
     

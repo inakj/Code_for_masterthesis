@@ -22,7 +22,7 @@ class Stress:
             control(bool):  control of concrete stress, return True or False
         '''
         self.sigma_p_uncracked = self.calculate_reinforcement_stress_uncracked(uncracked_stress.sigma_c_uncracked[2],material.Ecm,material.Ep,load.sigma_p_max,time_effect.loss)
-        self.sigma_p_cracked = self.calculate_reinforcement_stress_cracked(deflection.eps_cs,material.Ep,time_effect.loss,cracked_stress.alpha,load.sigma_p_max,cracked_stress.sigma_c_cracked,cracked_stress.E_middle)
+        self.sigma_p_cracked = self.calculate_reinforcement_stress_cracked(deflection.eps_cs,material.Ep,time_effect.loss,cracked_stress.alpha,load.sigma_p_max,cracked_stress.sigma_c_cracked,cracked_stress.Ec_middle)
         self.control = self.control_stress(material.fck,material.fctm,deflection.control_of_Mcr,cracked_stress.sigma_c_cracked,uncracked_stress.sigma_c_uncracked)
 
 
@@ -58,10 +58,10 @@ class Stress:
         Returns:
             sigma_p(float):  stress in prestressed reinforcement [N/mm2]
         '''
-        eps_c = sigma_c_cracked / E_middle 
-        delta_eps_p = eps_c * (1 - alpha) / alpha 
-        self.delta_sigma_p = (delta_eps_p - eps_cs) * Ep 
-        sigma_p_cracked = sigma_p_max + self.delta_sigma_p - loss 
+        self.eps_c = abs(sigma_c_cracked) / E_middle 
+        self.delta_eps_p = self.eps_c * (1 - alpha) / alpha 
+        self.delta_sigma_p = (self.delta_eps_p - eps_cs) * Ep 
+        sigma_p_cracked = sigma_p_max - self.delta_sigma_p - loss 
         return sigma_p_cracked
     
     
@@ -76,19 +76,18 @@ class Stress:
         Returns:
             True if cracked, False if uncracked
         '''
-        allowed_pressure = - 0.6 * fck 
-        allowed_tension = fctm
+        self.allowed_pressure = - 0.6 * fck 
+        self.allowed_tension = fctm
         if control_M_cr == True:
-            if allowed_pressure >= sigma_c_cracked:
+            if self.allowed_pressure >= sigma_c_cracked:
                 return True
             else:
                 return False
         else:
-            if allowed_pressure >= max(sigma_c_uncracked[0],sigma_c_uncracked[1]) and allowed_tension > sigma_c_uncracked[2]:
+            if self.allowed_pressure >= max(sigma_c_uncracked[0],sigma_c_uncracked[1]) and self.allowed_tension > sigma_c_uncracked[2]:
                 return True
             else:
                 return False
+   
         
-        
-
-
+ 

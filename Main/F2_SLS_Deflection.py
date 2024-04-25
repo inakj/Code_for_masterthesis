@@ -43,23 +43,25 @@ class Deflection_prestressed:
         '''
         self.Ec_middle = self.calculate_E_middle(material.Ecm,creep_number.phi_selfload,creep_number.phi_liveload,load.Mg_SLS,load.Mp_SLS,load.M_prestress,time_effect.loss_percentage)
         self.netta = self.calculate_netta(material.Es,self.Ec_middle)
-        self.ro = self.calculate_ro(cross_section.As,cross_section.width,cross_section.d)
-        self.alpha_uncracked = self.calculate_alpha_uncracked(self.netta,cross_section.Ac,cross_section.height,cross_section.As,cross_section.d)
-        self.EI_1 = self.calculate_EI_uncracked(cross_section.width,cross_section.height,self.alpha_uncracked,cross_section.As,cross_section.d,self.Ec_middle,material.Es)
+        self.ro = self.calculate_ro(cross_section.As,cross_section.width,cross_section.d_2)
+        self.alpha_uncracked = self.calculate_alpha_uncracked(self.netta,cross_section.Ac,cross_section.height,cross_section.As,cross_section.d_2)
+        self.EI_1 = self.calculate_EI_uncracked(cross_section.width,cross_section.height,self.alpha_uncracked,cross_section.As,cross_section.d_2,self.Ec_middle,material.Es)
         self.deflection_uncracked = self.calculate_deflection_uncracked(length, load.g_k,load.p_k, factor, self.EI_1)
         self.alpha_cracked = self.calculate_alpha_cracked(self.netta,self.ro)
-        self.EI_2 = self.calculate_EI_cracked(self.alpha_cracked,cross_section.width,cross_section.d,self.Ec_middle,cross_section.As,material.Es)
+        self.EI_2 = self.calculate_EI_cracked(self.alpha_cracked,cross_section.width,cross_section.d_2,self.Ec_middle,cross_section.As,material.Es)
         self.deflection_cracked = self.calculate_deflection_cracked(length,load.g_k,load.p_k,factor,self.EI_2)
-        self.M_cr = self.calculate_M_cr(material.fctm,self.Ic1,self.netta,self.Ip1,cross_section.height,self.alpha_cracked,cross_section.d)
+        self.M_cr = self.calculate_M_cr(material.fctm,self.Ic1,self.netta,self.Ip1,cross_section.height,self.alpha_cracked,cross_section.d_2)
         self.control_Mcr = self.control_of_Mcr(self.M_cr,load.M_ULS)
         self.eps_cd0 = self.calculate_eps_cd_0(cement_class,RH,material.fcm)
         self.eps_cd = self.calculate_eps_cd(self.eps_cd0,cross_section.Ac,cross_section.width,cross_section.height)
         self.eps_ca = self.calculate_eps_ca(material.fck)
         self.eps_cs = self.calculate_eps_cs(self.eps_cd,self.eps_ca)
-        self.K_s = self.calculate_curvature(self.eps_cs,self.netta,cross_section.As,cross_section.Ac,cross_section.height,cross_section.d,cross_section.width)
+        self.K_s = self.calculate_curvature(self.eps_cs,self.netta,cross_section.As,cross_section.Ac,cross_section.height,cross_section.d_2,cross_section.width)
         self.deflection_shrinkage = self.calculate_deflection_shrinkage(self.K_s,length)
         self.total_deflection = self.calculate_deflection_tension_stiffening(self.M_cr,load.M_SLS,self.control_Mcr,self.deflection_shrinkage,self.deflection_cracked,self.deflection_uncracked)
         self.control = self.control_deflection(length,self.total_deflection)
+        self.utilization = self.get_utilization_degree(self.total_deflection)
+
 
     def calculate_E_middle(self, Ecm: int, phi_1: float, phi_2: float,
                            Mg_SLS: float, Mp_SLS: float, M_p: float, loss: float)-> float:
@@ -118,7 +120,7 @@ class Deflection_prestressed:
             alpha_uncracked(float):  factor for uncracked cross section
         '''
         alpha_uncracked = (Ac * 0.5 * h + netta * Ap * d) / (d * (Ac + netta * Ap))
-        return alpha_uncracked
+        return min(1,alpha_uncracked)
 
     def calculate_EI_uncracked(self, width: float, h: float, alpha: float, Ap: float, d: float, 
                                               Ec_middle: float, Ep: int)-> float:
@@ -162,7 +164,7 @@ class Deflection_prestressed:
             alpha_cracked(float):  factor for cracked cross section
         '''
         alpha_cracked = np.sqrt((netta * ro)** 2 + 2 * netta * ro) - netta * ro
-        return alpha_cracked
+        return min(1,alpha_cracked)
 
     def calculate_EI_cracked(self, alpha: float, width: float, d: float, Ec_middle: float,
                                             Ap: float, Ep: int)-> float:
@@ -366,8 +368,14 @@ class Deflection_prestressed:
             True or False(boolean):  Return true if the deflection is within the limit, and False
             if the deflection is to big
         '''
-        max_deflection = (length * 1000) / 250 
-        if max_deflection > total_deflection:
+        self.max_deflection = (length * 1000) / 250 
+        if self.max_deflection > total_deflection:
             return True
         else: 
             return False
+        
+    def get_utilization_degree(self,total_deflection):
+        '''
+        '''
+        utilization = (self.max_deflection / total_deflection ) * 100
+        return round(utilization,1)
