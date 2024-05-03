@@ -1,5 +1,6 @@
 
-import sys
+''' This script contain the Material class that apply for all reinforcement cases.
+'''
 
 class Material: 
     '''Material class to contain material properties used in calculations.
@@ -9,13 +10,61 @@ class Material:
     def __init__(self, concrete_class: str, steel_class: str,
                  prestress_name: str, prestress_diameter: float):  
         '''Args:
-            concrete_class (string): defined by user
-            steel_class (string): defined by user
-            prestress_name (string): defined by user, according to table 2 in EN10138-3
-            prestress_diameter (float): defined by user, according to table 2 in EN10138-3
+            concrete_class (str): concrete class, from Input class 
+            steel_class (str): steel class, from Input class 
+            prestress_name (str): name of prestress type, from Input class , according to table 2 in EN10138-3
+            prestress_diameter (float): diameter of prestressed reinforcement, from Input class , according to table 2 in EN10138-3
         Returns:
-            All factors and parameters needed to calculate SLS and ULS capacity for a simply 
-            supported beam with evenly distributed load. 
+            - Load- and materialfactor attributes -
+
+            gamma_shrinkage(float):  loadfactor for shrink
+            gamma_0_9(float):  loadfactor for prestressing
+            gamma_1_1(float):  loadfactors for prestressing
+            gamma_selfload(float):  loadfactor for self-load
+            gamma_liveload(float):  loadfactor for live-load
+            gamma_concrete(float):  materialfactor for concrete
+            gamma_reinforcement(float):  materialfactor for ordinary reinforcement steel
+            gamma_prestressed_reinforcement(float):  materialfactor for prestressed reinforcement steel 
+
+            - Concrete attributes - 
+
+            fck(int):  cylinder compression strength [N/mm2] 
+            fck_cube(int):  Cubic compressive strength [N/mm2]
+            fcm(int):  middlevalue of cylinder compressive strength [N/mm2]
+            fctm(float):  middlevalue of concrete axial tension strength [N/mm2]
+            fctk_005(float):  0.05 % concrete characteristic axial tension strength [N/mm2]
+            fctk_095(float):  0.95 % concrete characteristic axial tension strenght [N/mm2]
+            Ecm(int):  Elasticity modulus for concrete [N/mm2]
+            eps_c1(float):  compression strain for biggest stress 
+            eps_cu1(float):  strain limit for compression
+            eps_c2(float):  compression strain for biggest stress 
+            eps_cu2(float):  strain limit for compression
+            n(float):  exponent
+            eps_c3(float):  compression strain for biggest stress 
+            eps_cu3(float):  strain limit for compression 
+            lambda_factor(float):  factor for effective height
+            netta(float):  factor for effective strength
+            alfa_cc(float):  design compressive strength coefficient
+            alfa_ct(float):  design tensile strength coefficient 
+            fcd(float):  design compressive strength [N/mm2]
+            fctd(float):  design tensile strength [N/mm2]
+
+            - Ordinary reinforcement attributes -
+
+            fyk(int):  steel tensions characteristic strength [N/mm2]
+            Es(int):  elasiticity modulus for steel [N/mm2]
+            eps_yk(float):  characteristic yield strain
+            fyd(float):  design tensile strength
+            eps_yd(float):  design yield strain
+
+            - Prestressed reinforcement attributes -
+
+            Ep(int):  elasticity moduls for prestensioned steel [N/mm2]
+            fpk(int):  tensile strength for prestress [N/mm2]
+            Ap(float):  cross sectional area for prestress [mm2] 
+            Fpk(float):  characteristic maximum force for prestressing [kN] 
+            Fp01k(float):  characteristic 0.1% proof force [kN] 
+            fp01k(float):  characteristic 0.1% proof stress [N/mm2] 
         '''
 
     # LOAD- AND MATERIALFACTORS
@@ -80,23 +129,24 @@ class Material:
     # PRESTRESSED REINFORCEMENT PARAMETERS
        
         self.Ep = self.get_Ep()
-        index_prestress = self.get_index_prestress(prestress_name,prestress_diameter)   
+        index_prestress = self.get_index_prestress(prestress_name, prestress_diameter)   
         self.fpk = self.get_fpk(index_prestress)
         self.Ap_strand = self.get_Ap(index_prestress)
         self.Fpk = self.get_Fpk(index_prestress)
         self.Fp01k = self.get_Fp01k(index_prestress)
-        self.fp01k = self.calculate_fp01k(self.Fp01k,self.Ap_strand,index_prestress)
+        self.fp01k = self.calculate_fp01k(self.Fp01k, self.Ap_strand, index_prestress)
+        
        
 #-------------CONCRETE PARAMETERS---------------------------------------------------------------------
         
-    def get_index(self,concrete_class: str)-> int: 
+    def get_index(self, concrete_class: str) -> int: 
         ''' Get index to decide concrete parameters according to concrete class and table 3.1 in EC2.
         Args:
             concrete_class(string):  defined by user
         Returns:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Raises:
-            ValueError: If the concrete class do not exist
+            ValueError:  If the concrete class do not exist
         '''
         match concrete_class:
             case 'C12':
@@ -130,185 +180,187 @@ class Material:
             case _:
                 raise ValueError(f'Concrete class {concrete_class} do not exist')
     
-    def get_fck(self,index: int)-> int:
+    def get_fck(self, index: int) -> int:
         ''' Get compression strength fck based on index number and table 3.1 in EC2.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             fck(int):  cylinder compression strength [N/mm2]
         '''
         fck_vektor = [12, 16, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80, 90]
         return fck_vektor[index]
     
-    def get_fck_cube(self,index: int)-> int:
+    def get_fck_cube(self, index: int) -> int:
         ''' Get compressive strength fck_cube based on index number and table 3.1 in EC2.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             fck_cube(int):  Cubic compressive strength [N/mm2]
         '''
         fck_cube_vektor = [15, 20, 25, 30, 37, 45, 50, 55, 60, 67, 75, 85, 95, 105]
         return fck_cube_vektor[index]
     
-    def get_fcm(self,index: int)-> int:
+    def get_fcm(self, index: int) -> int:
         ''' Get compressive strength fcm based on index number and table 3.1 in EC2.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):   for defining parameters from table 3.1
         Returns:
             fcm(int):  middlevalue of cylinder compressive strength [N/mm2]
             '''
         fcm_vektor = [20, 24, 28, 33, 38, 43, 48, 53, 58, 63, 68, 78, 88, 98]
         return fcm_vektor[index]
 
-    def get_fctm(self,index: int)-> float:
+    def get_fctm(self, index: int) -> float:
         ''' Get tension strength fctm based on index number and table 3.1 in EC2.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             fctm(float):  middlevalue of concrete axial tension strength [N/mm2]
             '''
         fctm_vektor = [1.6, 1.9, 2.2, 2.6, 2.9, 3.2, 3.5, 3.8, 4.1, 4.2, 4.4, 4.6, 4.8, 5.0]
         return fctm_vektor[index]
 
-    def get_fctk_005(self,index: int)-> float:
+    def get_fctk_005(self, index: int) -> float:
         ''' Get tension strength fct_005 based on index number and table 3.1 in EC2.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             fctk_005(float):  0.05 % concrete characteristic axial tension strength [N/mm2]
         '''
         fctk_005_vektor = [1.1, 1.3, 1.5, 1.8, 2.0, 2.2, 2.5, 2.7, 2.9, 3.0, 3.1, 3.2, 3.4, 3.5]
         return fctk_005_vektor[index]
         
-    def get_fctk_095(self,index: int)-> float:
+    def get_fctk_095(self, index: int) -> float:
         ''' Get tension strength fctk_095 based on index number and table 3.1 in EC2.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             fctk_095(float):  0.95 % concrete characteristic axial tension strenght [N/mm2]
         '''
         fctk_095_vektor = [2.0, 2.5, 2.9, 3.3, 3.8, 4.2, 4.6, 4.9, 5.3, 5.5, 5.7, 6.0, 6.3, 6.6]
         return fctk_095_vektor[index]
     
-    def get_Ecm(self,index: int)-> int:
+    def get_Ecm(self, index: int) -> int:
         ''' Get elasiticty modulus Ecm based on index number and table 3.1 in EC2.
         Multiplied with 1000 to get from GPa (as its given in the table) to MPa
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             Ecm(int):  Elasticity modulus for concrete [N/mm2]
         '''
         Ecm_vektor = [27, 29, 30, 31, 33, 34, 35, 36, 37, 38, 39, 41, 42, 44] 
         return Ecm_vektor[index] * 1000 
 
-    def get_eps_c1(self,index: int)-> float:
+    def get_eps_c1(self, index: int) -> float:
         ''' Get strain eps_c1 for a non-linear analysis based on index number and table 3.1 in EC2.
         Divided on 1000 to get form percent to decimal number.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
-            eps_c1(float):  compression strain for biggest stress 
+            eps_c1(float):  compression strain for biggest stress
         '''
         eps_c1_vektor = [1.8, 1.9, 2.0, 2.1, 2.2, 2.25, 2.3, 2.4, 2.45, 2.5, 2.6, 2.7, 2.8, 2.8]
         return eps_c1_vektor[index] / 1000
 
-    def get_eps_cu1(self,index: int)-> float:
+    def get_eps_cu1(self, index: int) -> float:
         ''' Get strain limit eps_cu1 for a non-linear analysis based on index number and table 3.1 in EC2.
         Divided on 1000 to get form percent to decimal number
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
-            eps_cu1(float):  strain limit for compression
+            eps_cu1(float):  strain limit for compression 
         '''
         eps_cu1_vektor = [3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.2, 3.0, 2.8, 2.8, 2.8]
         return eps_cu1_vektor[index] / 1000
 
 
-    def get_eps_c2(self,index: int)-> float:
+    def get_eps_c2(self, index: int) -> float:
         ''' Get strain eps_c2 for a parabolic analysis based on index number and table 3.1 in EC2.
         Divided on 1000 to get form percent to decimal number
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             eps_c2(float):  compression strain for biggest stress 
         '''
         eps_c2_vektor = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.2, 2.3, 2.4, 2.5, 2.6]
         return eps_c2_vektor[index] / 1000
   
-    def get_eps_cu2(self,index: int)-> float:
+    def get_eps_cu2(self, index: int) -> float:
         ''' Get strain limit eps_cu2 for a parabolic analysis based on index number and table 3.1 in EC2.
         Divided on 1000 to get form percent to decimal number
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
-            eps_cu2(float):  strain limit for compression
+            eps_cu2(float):  strain limit for compression 
         '''
         eps_cu2_vektor = [3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.1, 2.9, 2.7, 2.6, 2.6]
         return eps_cu2_vektor[index] / 1000
     
-    def get_n(self,index: int)-> float:
+    def get_n(self, index: int) -> float:
         ''' Get exponent n based on index number and table 3.1 in EC2.
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
             n(float):  exponent
         '''
         n_vektor = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 1.75, 1.6, 1.45, 1.4, 1.4]
         return n_vektor[index]
 
-    def get_eps_c3(self,index: int)-> float:
+    def get_eps_c3(self, index: int) -> float:
         ''' Get strain eps_c3 for a bilinear or rectangular analysis based on index number and table 3.1 in EC2.
         Divided on 1000 to get form percent to decimal number
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1 
         Returns:
             eps_c3(float):  compression strain for biggest stress 
         '''
         eps_c3_vektor = [1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 1.8, 1.9, 2.0, 2.2, 2.3]
         return eps_c3_vektor[index] / 1000
     
-    def get_eps_cu3(self,index: int)-> float:
+    def get_eps_cu3(self, index: int) -> float:
         ''' Get strain limit eps_cu3 for a bilinear or rectangular analysis based on index number and table 3.1 in EC2.
         Divided on 1000 to get form percent to decimal number
         Args:
-            index(int): for defining parameters from table 3.1
+            index(int):  for defining parameters from table 3.1
         Returns:
-            eps_cu3(float):  strain limit for compression
+            eps_cu3(float):  strain limit for compression 
         '''
         eps_cu3_vektor = [3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.5, 3.1, 2.9, 2.7, 2.6, 2.6]
         return eps_cu3_vektor[index] / 1000
     
-    def calculate_lambda(self,fck: int)-> float:
+    def calculate_lambda(self, fck: int) -> float:
         ''' Function that calculate a factor lambda which defines the effective height for 
         compression zone in concrete, according to EC2 3.1.7(3)
         Args:
             fck(int):  cylinder compression strength [N/mm2]
         Returns:
-            lambda_factor(float): factor 
+            lambda_factor(float): factor for effective height
         '''
         if fck <= 50:
             self.lambda_factor = 0.8
         elif 50 < fck <= 90:
             self.lambda_factor = 0.8 - (fck / 50) / 400
+
         return self.lambda_factor 
     
-    def calculate_netta(self,fck: int)-> float:
+    def calculate_netta(self, fck: int) -> float:
         ''' Function that calculate a factor netta which defines the effective strength, 
         according to EC2 3.1.7(3)
         Args:
             fck(int):  cylinder compression strength [N/mm2]
         Returns: 
-            netta(float): factor
+            netta(float):  factor for effective strength
         '''
         if fck <= 50:
             self.netta = 1.0
         elif 50 < fck <= 90:
             self.netta = 1.0 - (fck / 50) / 200
+
         return self.netta
 
 # ----------------------STEEL PARAMETERS---------------------------------------------------------------
     
-    def get_fyk(self,steel_class: float )-> int:
+    def get_fyk(self, steel_class: float ) -> int:
         '''Get reinforcements characteristic strength fyk based on steel class.
         Args:
             steel_class(str): defined by user
@@ -318,7 +370,7 @@ class Material:
         fyk = steel_class
         return fyk
 
-    def get_Es(self)-> int:
+    def get_Es(self) -> int:
         '''Get elasiticity modulus for steel Es according to EC2 3.2.7(4).
         Returns:
             Es(int):  elasiticity modulus for steel [N/mm2]
@@ -326,7 +378,7 @@ class Material:
         Es = 2 * 10 ** 5
         return Es
     
-    def get_Ep(self)-> int:
+    def get_Ep(self) -> int:
         '''Get elasticity modulus for prestressing according to EC2 3.3.6(3)
         Returns:
             Ep(int):  elasticity moduls for prestensioned steel [N/mm2]
@@ -334,12 +386,12 @@ class Material:
         Ep = 1.95 * 10 ** 5
         return Ep
 
-    def get_index_prestress(self,prestress_name:str,prestress_diameter:str)-> int: 
+    def get_index_prestress(self, prestress_name: str, prestress_diameter: str) -> int: 
         '''Get index based on name of prestressing material from table 2 in EN10138-3.
         Args: 
             prestress_name(string):  defined by user
         Returns:
-            index for determining parameters for prestress or "None" if the name do not exist.
+            index(int):  determining parameters for prestress or "None" if the name do not exist.
         '''
         if prestress_name == 'Y1860S3':
             match prestress_diameter:
@@ -399,11 +451,12 @@ class Material:
                    return 22
     
         
-             
-    def get_fpk(self,index_prestress: int)-> int: 
+    def get_fpk(self, index_prestress: int) -> int: 
         '''Get tensile strength for prestress based on index and table 2 in EN10138-3.
+        Args:
+            index(int):  for determining parameters for prestress or "None" if the name do not exist
         Returns:
-            fpk(int): tensile strength for prestress [N/mm2] or 0 if the index == None
+            fpk(int):  tensile strength for prestress [N/mm2] or 0 if the index == None
         '''
         if index_prestress == None:
             return 0
@@ -412,10 +465,12 @@ class Material:
              1770, 1770, 1860, 1820, 1700, 2160, 2060, 1960, 2160, 2060, 1960]
             return fpk[index_prestress]
 
-    def get_Ap(self,index_prestress: int)-> float:
+    def get_Ap(self, index_prestress: int) -> float:
         '''Get area of each prestress strand based on index and table 2 in EN10138-3.
+        Args:
+            index(int):  for determining parameters for prestress or "None" if the name do not exist
         Returns:
-            Ap(float): cross sectional area for prestress [mm2] or 0 if the index == None
+            Ap(float):  cross sectional area for prestress [mm2] or 0 if the index == None
         '''
         if index_prestress == None:
             return 0
@@ -424,10 +479,12 @@ class Material:
              140, 150, 140, 150, 200, 112, 165, 223, 13.6, 13.6, 21.2, 28.2, 30, 50]
             return Ap[index_prestress]
     
-    def get_Fpk(self,index_prestress: int)-> float:
+    def get_Fpk(self, index_prestress: int) -> float:
         '''Get characteristic maximum force Fm based on index and table 2 in EN10138-3.
+        Args:
+            index(int):  for determining parameters for prestress or "None" if the name do not exist
         Returns:
-            Fpk(float): characteristic maximum force for prestressing [kN] or 0 if the index == None
+            Fpk(float):  characteristic maximum force for prestressing [kN] or 0 if the index == None
         '''
         if index_prestress == None:
             return 0
@@ -437,10 +494,12 @@ class Material:
             return Fpk[index_prestress]
     
     
-    def get_Fp01k(self,index_prestress: int)-> float:
+    def get_Fp01k(self, index_prestress: int) -> float:
         '''Get characteristic 0.1% proof force for prestress based on index and table 2 in EN10138-3.
+        Args:
+            index(int):  for determining parameters for prestress or "None" if the name do not exist
         Returns:
-            Fp01k(float): characteristic 0.1% proof force [kN] or 0 if the index == None
+            Fp01k(float):  characteristic 0.1% proof force [kN] or 0 if the index == None
         '''
         if index_prestress == None:
             return 0
@@ -449,13 +508,14 @@ class Material:
                      327, 26.2, 24.1, 35.6, 52.4, 53,84]
             return Fp01k[index_prestress]
     
-    def calculate_fp01k(self,Fp01k:float ,Ap:float,index_prestress: int)-> float:
+    def calculate_fp01k(self, Fp01k: float ,Ap: float, index_prestress: int)-> float:
         '''Calculate characteristic 0.1% proof tension for prestress
         Args:
-            Fp01k(float): characteristic 0.1% proof force [kN]
-            Ap(float): cross sectional area for prestress [mm2]
+            Fp01k(float):  characteristic 0.1% proof force [kN]
+            Ap(float):  cross sectional area for prestress [mm2]
+            index(int):  for determining parameters for prestress or "None" if the name do not exist
         Returns:
-            fp01k(float): characteristic 0.1% proof stress [N/mm2] or 0 if the index == None
+            fp01k(float):  characteristic 0.1% proof stress [N/mm2] or 0 if the index == None
         '''
         if index_prestress == None:
             return 0
