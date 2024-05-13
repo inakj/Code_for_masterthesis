@@ -53,28 +53,28 @@ class Input:
         '''
        # Material attributes
         self.concrete_class: str    = 'C30'   # must be given with 'C + number' between 12 and 90
-        self.steel_class: str       = 'B500NC' # must be givenin this exact format 
+        self.steel_class: str       = 'B500NC' # must be given in this exact format 
         self.cement_class: str      = 'R'      # must be 'R', 'S' or 'N'
         self.relative_humidity: int  = 40      # relative humidity around beam, from 1 - 100[%]
-        self.exposure_class: str    = 'XC1'   # must be one of the following 
+        self.exposure_class: str    = 'XC1'  # must be one of the following 
                                                # ['X0','XC1','XC2','XC3','XC4','XD1','XS1','XD2','XD3','XS2','XS3']
         
         # Geometry attributes
         self.width: float        = 300 # width of cross section [mm]
-        self.height: float       = 700  # height of cross section [mm]
-        self.beam_length: float  = 8 # total length of beam [m]
+        self.height: float       = 800 # height of cross section [mm]
+        self.beam_length: float  = 10 # total length of beam [m]
 
         # Reinforcement attributes
-        self.nr_ordinary_reinforcement_bars: int    = 6 # number of ordinary reinforcement bars in longitudinal direction
-        self.ordinary_reinforcement_diameter: float = 16 # diameter of ordinary reinforcement bars in longitudinal direction [mm]
+        self.nr_ordinary_reinforcement_bars: int    = 4 # number of ordinary reinforcement bars in longitudinal direction
+        self.ordinary_reinforcement_diameter: float = 20 # diameter of ordinary reinforcement bars in longitudinal direction [mm]
         self.stirrup_diameter: float                = 10 # diameter of stirrup diameter / shear reinforcement around the longitudinal bars [mm]
-        self.shear_reinforcement: float             = 200 / 125 # shear reinforcement / stirrup reinforcement given as area of 
+        self.shear_reinforcement: float             = 200 / 220 # shear reinforcement / stirrup reinforcement given as area of 
                                                          # reinforcement divided on distance between stirrups [mm2] / [mm]
 
         # Load attributes
         self.distributed_selfload: float        = 5 # evenly distributed characteristic selfload [kN/m]
         self.selfload_application: int          = 7 # days after casting when selfload is applied as load in calculation [days]
-        self.distributed_liveload: float        = 25 # evenly distributed characteristic liveload [kN/m]
+        self.distributed_liveload: float        = 30 # evenly distributed characteristic liveload [kN/m]
         self.liveload_application: int          = 90 # days after casting when liveload is applied as load in calculation [days]
         self.percent_longlasting_liveload: int  = 40 # part of liveload that is assumed to be longlasting [%]
             
@@ -83,9 +83,9 @@ class Input:
         if self.is_the_beam_prestressed              == True:
             # If the beam is prestressed, only change these the first three inputs insice the if-sentence
             # If the beam is not prestressed, do not change any of the values within this if-else sentence
-            self.nr_prestressed_bars: int                 = 3 # number of prestressed reinforcement bars in longitudinal direction
+            self.nr_prestressed_bars: int                 = 4 # number of prestressed reinforcement bars in longitudinal direction
             self.prestressed_reinforcment_diameter: float = 15.2 # diameter of prestressed reinforcement bars in longitudinal direction [mm]
-            self.prestressed_reinforcment_name: str       = 'Y1860S7' # name of prestressed reinforcement, if not prestressed, type None
+            self.prestressed_reinforcment_name: str       = 'Y1770S7' # name of prestressed reinforcement, if not prestressed, type None
         else:
             self.nr_prestressed_bars: int                 = 0 # dont change this 
             self.prestressed_reinforcment_diameter: float = 0 # dont change this

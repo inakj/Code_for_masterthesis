@@ -47,37 +47,37 @@ class Deflection_prestressed:
             if the deflection is to big
         
         '''
-        self.Ec_middle = self.calculate_Ec_middle(material.Ecm, creep_number.phi_selfload, creep_number.phi_liveload, load.Mg_SLS, load.Mp_SLS, load.M_prestress, time_effect.loss_percentage)
+        self.Ec_middle = self.calculate_Ec_middle(material.Ecm, creep_number.phi_selfload, creep_number.phi_liveload, load.Mg_d, load.Mp_d, load.M_prestress, time_effect.loss_percentage)
         self.netta = self.calculate_netta(material.Es, self.Ec_middle)
-        self.ro_l = self.calculate_ro(cross_section.As, cross_section.width, cross_section.d_2)
-        self.alpha_uncracked = self.calculate_alpha_uncracked(self.netta, cross_section.Ac, cross_section.height, cross_section.As, cross_section.d_2)
-        self.EI_1 = self.calculate_EI_uncracked(cross_section.width, cross_section.height, self.alpha_uncracked, cross_section.As, cross_section.d_2, self.Ec_middle, material.Es)
-        self.deflection_uncracked = self.calculate_deflection_uncracked(length, load.g_k, load.p_k, factor, self.EI_1)
+        self.ro_l = self.calculate_ro(cross_section.Ap, cross_section.width, cross_section.d_2)
+        self.alpha_uncracked = self.calculate_alpha_uncracked(self.netta, cross_section.Ac, cross_section.height, cross_section.Ap, cross_section.d_2)
+        self.EI_1 = self.calculate_EI_uncracked(cross_section.width, cross_section.height, self.alpha_uncracked, cross_section.Ap, cross_section.d_2, self.Ec_middle, material.Ep)
+        self.deflection_uncracked = self.calculate_deflection_uncracked(length, load.g_d, load.p_d, factor, self.EI_1)
         self.alpha_cracked = self.calculate_alpha_cracked(self.netta, self.ro_l)
-        self.EI_2 = self.calculate_EI_cracked(self.alpha_cracked, cross_section.width, cross_section.d_2, self.Ec_middle, cross_section.As, material.Es)
-        self.deflection_cracked = self.calculate_deflection_cracked(length, load.g_k, load.p_k, factor, self.EI_2)
-        self.M_cr = self.calculate_M_cr(material.fctm, self.Ic1, self.netta, self.Ip1, cross_section.height, self.alpha_cracked, cross_section.d_2)
-        self.control_Mcr = self.control_of_Mcr(self.M_cr, load.M_ULS)
+        self.EI_2 = self.calculate_EI_cracked(self.alpha_cracked, cross_section.width, cross_section.d_2, self.Ec_middle, cross_section.Ap, material.Es)
+        self.deflection_cracked = self.calculate_deflection_cracked(length, load.g_d, load.p_d, factor, self.EI_2)
+        self.M_cr = self.calculate_M_cr(material.fctm, self.Ic1, self.netta, self.Ip1, cross_section.height, self.alpha_uncracked, cross_section.d_2)
+        self.control_Mcr = self.control_of_Mcr(self.M_cr, load.M_Ed)
         self.eps_cd0 = self.calculate_eps_cd_0(cement_class, RH, material.fcm)
         self.eps_cd = self.calculate_eps_cd(self.eps_cd0, cross_section.Ac, cross_section.width, cross_section.height)
         self.eps_ca = self.calculate_eps_ca(material.fck)
         self.eps_cs = self.calculate_eps_cs(self.eps_cd, self.eps_ca)
-        self.K_s = self.calculate_curvature(self.eps_cs, self.netta, cross_section.As, cross_section.Ac, cross_section.height, cross_section.d_2, cross_section.width)
+        self.K_s = self.calculate_curvature(self.eps_cs, self.netta, cross_section.Ap, cross_section.Ac, cross_section.height, cross_section.d_2, cross_section.width)
         self.deflection_shrinkage = self.calculate_deflection_shrinkage(self.K_s, length)
-        self.total_deflection = self.calculate_deflection_tension_stiffening(self.M_cr, load.M_SLS, self.control_Mcr, self.deflection_shrinkage, self.deflection_cracked, self.deflection_uncracked)
+        self.total_deflection = self.calculate_deflection_tension_stiffening(self.M_cr, load.M_Ed, self.control_Mcr, self.deflection_shrinkage, self.deflection_cracked, self.deflection_uncracked)
         self.control = self.control_deflection(length, self.total_deflection)
         self.utilization = self.calculate_utilization_degree(self.total_deflection)
 
 
     def calculate_Ec_middle(self, Ecm: int, phi_selfload: float, phi_liveload: float,
-                           Mg_SLS: float, Mp_SLS: float, M_p: float, loss: float) -> float:
+                           Mg_d: float, Mp_d: float, M_p: float, loss: float) -> float:
         ''' Function that calculates Ec_middle, based on effective elasticity modulus according to EC2 7.4.3(5)
         Args:
             Ecm(int):  elasticity modulus for concrete, from Material class [N/mm2]
             phi_selfload(float):  creep number for self-load, from Creep number class
             phi_liveload(float):  creep number for live-load, from Creep cnumber class
-            Mg_SLS(float):  characteristic self-load moment, from Load properties class[kNm]
-            Mp_SLS(float):  characteristic live-load moment, from Load properties class[kNm]
+            Mg_d(float):  self-load moment, from Load properties class[kNm]
+            Mp_d(float):  live-load moment, from Load properties class[kNm]
             M_prestress(float):  moment because of prestressing [kNm]
             loss(float):  loss of prestress because of time effects [%]
         Returns:
@@ -89,7 +89,7 @@ class Deflection_prestressed:
         
         M_prestress = M_p * (1 - loss / 100) # Moment because of prestresseding force including losses
 
-        Ec_middle = (abs(M_prestress) + Mg_SLS + Mp_SLS) / ( (abs(M_prestress) + Mg_SLS) / Ec_eff_selfload + Mp_SLS / Ec_eff_liveload) # Derivated from Sørensen (5.25)
+        Ec_middle = (abs(M_prestress) + Mg_d + Mp_d) / ( (abs(M_prestress) + Mg_d) / Ec_eff_selfload + Mp_d / Ec_eff_liveload) # Based on Sørensen (5.25)
         return Ec_middle
 
     def calculate_netta(self, Ep: int, Ec_middle: float) -> float:
@@ -106,7 +106,7 @@ class Deflection_prestressed:
     def calculate_ro(self, Ap: float, width: float, d: float) -> float:
         ''' Function that calculates reinforcement ratio ro
         Args:
-            As(float):  reinforcement area, from Cross section class[mm2]
+            Ap(float):  prestressed reinforcement area, from Cross section class[mm2]
             width(float): width, from Cross section class [mm]
             d(float):  effective height, from Cross section class[mm]
         Returns:
@@ -126,7 +126,7 @@ class Deflection_prestressed:
         Returns:
             alpha_uncracked(float):  factor for uncracked cross section
         '''
-        alpha_uncracked = (Ac * 0.5 * h + netta * Ap * d) / (d * (Ac + netta * Ap)) # Derivated from Sørensen (5.13)
+        alpha_uncracked = (Ac * 0.5 * h + netta * Ap * d) / (d * (Ac + netta * Ap)) # Based on Sørensen (5.13)
         return min(1,alpha_uncracked)
 
     def calculate_EI_uncracked(self, width: float, h: float, alpha: float, Ap: float, d: float, 
@@ -136,7 +136,7 @@ class Deflection_prestressed:
             width(float): width, from Cross section class [mm]
             h(float):  height, from Cross section class [mm]
             alpha(float):  factor for uncracked cross section 
-            As(float):  prestressed reinforcement area, from Cross section class[mm2]
+            Ap(float):  prestressed reinforcement area, from Cross section class[mm2]
             d(float):  effective height, from Cross section class[mm]
             Ec_middle(float):  middle elasticity modulus [N/mm2]
             Ep(int):  elasiticity modulus for prestressed steel, from Material class [N/mm2]
@@ -145,9 +145,9 @@ class Deflection_prestressed:
         '''
         self.Ic1 = (width * h ** 3) / 12 + width * h * (alpha * d - h / 2) ** 2  # From Sørensen (5.14)
 
-        self.Ip1 = Ap * (d - alpha * d) ** 2 # Derivated from Sørensen (5.15)
+        self.Ip1 = Ap * (d - alpha * d) ** 2 # Based on Sørensen (5.15)
 
-        EI_1 = Ec_middle * self.Ic1 + Ep * self.Ip1 # Derivated from Sørensen (5.16)
+        EI_1 = Ec_middle * self.Ic1 + Ep * self.Ip1 # Based on Sørensen (5.16)
         return EI_1
     
     def calculate_deflection_uncracked(self, length: float, g: float, p: float, factor: float, EI_1: float) -> float:
@@ -189,7 +189,7 @@ class Deflection_prestressed:
         Returns:
             EI_2(float):  bending stiffnes for cracked cross section [Nmm2]
         '''
-        self.Ic2 = 0.5 * alpha ** 2 * (1 - alpha/3) * width * d ** 3 # From Sørensen (5.6)
+        self.Ic2 = (width * (alpha * d) ** 3) / 3  # From Sørensen (5.6)
 
         self.Ip2 = Ap * ((1 - alpha) * d) ** 2 # Derviated from Sørensen (5.7)
 
@@ -224,7 +224,7 @@ class Deflection_prestressed:
         Returns:
             M_cr(float):  crack moment [kNm]
         '''
-        M_cr = fctm * (Ic1 + netta * Ip1) / (h - alpha_uncracked * d) # Derivated from Sørensen (5.20)
+        M_cr = fctm * (Ic1 + netta * Ip1) / (h - alpha_uncracked * d) # Based on Sørensen (5.20)
         return M_cr * 10 ** (-6)
     
     def control_of_Mcr(self, M_cr: float, M_Ed: float) -> float:
@@ -232,7 +232,7 @@ class Deflection_prestressed:
         is smaller than the design moment. Design moment with load factors is used to give a conservative solution 
         Args:
             M_cr(float):  crack moment [kNm]
-            M_Ed(float):  design moment in ULS, from Load properties class [kNm]
+            M_Ed(float):  design moment, from Load properties class [kNm]
         Returns:        
             True or False(boolean):  True if cracked cross section. False if uncracked cross section
         '''
@@ -292,7 +292,7 @@ class Deflection_prestressed:
         k_h_vector = [1,0.85,0.75,0.7]
         for i in range(len(h_0_vector)-1):
             if h_0_vector[i+1] >= h_0 >= h_0_vector[i]:
-                k_h = (k_h_vector[i+1] - k_h_vector[i]) / (h_0_vector[i+1] - h_0_vector[i]) * (h_0 - h_0_vector[i]) + k_h_vector[i]
+                k_h = ((k_h_vector[i+1] - k_h_vector[i]) / (h_0_vector[i+1] - h_0_vector[i])) * (h_0 - h_0_vector[i]) + k_h_vector[i]
 
         beta_ds = 1 # From EC2 (3.10) with t = infinity 
 
@@ -340,13 +340,13 @@ class Deflection_prestressed:
         Returns: 
             K_s(float):  curvature because of shrinkage [mm-1]
         '''
-        a = (Ac * 0.5 * height  + netta * Ap * d) / (Ac + netta * Ap) # Derivated from Sørensen ex. 5.6
+        a = (Ac * 0.5 * height  + netta * Ap * d) / (Ac + netta * Ap) # Based on Sørensen ex. 5.6
 
         e = d - a # From Sørensen ex. 5.6
 
-        I = (width * height ** 3) / 12 + width * height * (a - height / 2) ** 2 + netta * Ap * e ** 2 # Second moment of inertia, derivated from Sørensen ex. 5.6
+        I = (width * height ** 3) / 12 + width * height * (a - height / 2) ** 2 + netta * Ap * e ** 2 # Second moment of inertia, based on Sørensen ex. 5.6
 
-        K_s = eps_cs * netta * (Ap * e) / I # Derivated from Sørensen (5.33)
+        K_s = eps_cs * netta * (Ap * e) / I # Based on from Sørensen (5.33)
         return K_s
     
     def calculate_deflection_shrinkage(self, K_s: float, length: float) -> float:
@@ -368,7 +368,7 @@ class Deflection_prestressed:
         with creep is different for cracked and uncracked. 
        Args:
             M_cr(float):  crack moment [kNm]
-            M_Ed(float):  design moment in ULS, from Load propeties class [kNm]
+            M_Ed(float):  design moment in, from Load propeties class [kNm]
             control(bool):  True if cracked cross section. False if uncracked cross section
             deflection_shrinkage(float):  delfection only because of shrinkage [mm]
             deflection_cracked(float):  deflection including creep for cracked cross section [mm]

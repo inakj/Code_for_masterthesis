@@ -81,7 +81,7 @@ class Creep_number:
         if fcm <= 35:
             phi_RH = 1 + (1 - RH / 100) / (0.1 * h0 ** (1 / 3)) # From (B.3a)
         else:
-            phi_RH = (1 + (1 - RH / 100) / (0.1 * h0 ** (1 / 3)) * alpha_1) * alpha_2 # From (B.3b)
+            phi_RH = (1 + ((1 - RH / 100) / (0.1 * h0 ** (1/3))) * alpha_1) * alpha_2 # From (B.3b)
 
         return phi_RH
 

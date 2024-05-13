@@ -27,7 +27,7 @@ class Crack_control_prestressed:
         '''
         self.k_c = self.calculate_kc(cross_section.cnom, cross_section.c_min_dur)
         self.crack_width = self.get_limit_value(exposure_class, self.k_c)
-        self.sigma_p = self.calculate_sigma_p(material.fpk, stress.sigma_p_cracked)
+        self.sigma_p = self.calculate_sigma_p(load.sigma_p_max, stress.sigma_p_cracked)
         self.max_bar_diameter  = self.calculate_maximal_bar_diameter(self.crack_width, self.sigma_p)
         self.control_bar_diameter = self.control_of_bar_diameter(bar_diameter, self.max_bar_diameter)
         self.utilization = self.calculate_utilization_degree(bar_diameter, self.max_bar_diameter)
@@ -64,16 +64,16 @@ class Crack_control_prestressed:
         else:
             raise ValueError(f"There is no exposure class called {exposure_class}")
         
-    def calculate_sigma_p(self, fpk: int, sigma_p_cracked: float) -> float:
+    def calculate_sigma_p(self, sigma_p_max: int, sigma_p_cracked: float) -> float:
         ''' Function that calculates stress in prestressed reinforcement to calculate max
         bar diameter, according to 7.3.3(2).
         Args:
-            fpk(int):  tensile strength for prestress, from Material class [N/mm2]
+            sigma_p_max(float):  design value of prestressing stress, from Load properties class [N/mm2]
             sigma_p_cracked(float):  reinforcement stress for cracked cross section, from Stress class [N/mm2]
         Returns:
             sigma_p(float):  stress in prestressed reinforcement to use for crack width calculation [N/mm2]
         '''
-        sigma_p = fpk - sigma_p_cracked
+        sigma_p = sigma_p_max - abs(sigma_p_cracked)
         return sigma_p
 
     def calculate_maximal_bar_diameter(self, w_max: float, sigma: float) -> float:
@@ -88,16 +88,18 @@ class Crack_control_prestressed:
         '''
 
         # limiting the stress to fit into table 7.2N from EC2
-        # If sigma is outside the range of the table, return None
-        if sigma > 450:
+        if sigma < 160:
+            sigma = 160
+        elif sigma > 450:
             sigma = None
-            max_bar_diameter = None
         else:
-            if sigma < 160:
-                sigma = 160
-            else:
-                sigma = sigma
-       
+            sigma = sigma 
+
+        # If sigma is outside the range of the table, return None    
+        if sigma == None:
+            max_bar_diameter = None
+
+        else:
             Ø = ([[40, 32, 20, 16, 12, 10, 8, 6],[32, 25, 16, 12, 10, 8, 6, 5],[25, 16, 12, 8, 6, 5, 4, 0]])  #  Bar diameter matrix
             a = [160, 200, 240, 280, 320, 360, 400, 450]  #  Reinforcement tension vector
             w = [0.4, 0.3, 0.2]  #  Crack width vector

@@ -22,27 +22,27 @@ class Cracked_Stress:
             netta(float):  material stiffness ratio 
             ro(float):  Reinforcement ratio 
             Ns(float):  axial force because of free shrink [kN]
-            a(float):  factor for calculating alpha
+            a(float):  ratio between moment and axial force [mm]
             alpha(float):  factor for calculating stresses
             sigma_c(float):  stress in concrete top [N/mm2]
         '''
-        self.Ec_middle = self.calculate_Ec_middle(material.Ecm, creep_number.phi_selfload, creep_number.phi_liveload, load.Mg_SLS, load.Mp_SLS, load.M_prestress, time_effect.loss_percentage)
+        self.Ec_middle = self.calculate_Ec_middle(material.Ecm, creep_number.phi_selfload, creep_number.phi_liveload, load.Mg_d, load.Mp_d, load.M_prestress, time_effect.loss_percentage)
         self.netta = self.calculate_netta(material.Es, self.Ec_middle)
-        self.ro_l = self.calculate_ro(cross_section.As, cross_section.width, cross_section.d_2)
+        self.ro_l = self.calculate_ro(cross_section.Ap, cross_section.width, cross_section.d_2)
         self.Ns = self.calculate_axial_force(deflection.eps_cs, material.Ep, cross_section.Ap)
-        self.a = self.calculate_a(load.Mg_SLS, load.Mp_SLS, load.P0, load.M_prestress, time_effect.loss_percentage, cross_section.e, self.Ns)
+        self.a = self.calculate_a(load.Mg_d, load.Mp_d, load.P0_d, load.M_prestress, time_effect.loss_percentage, cross_section.e, self.Ns)
         self.alpha = self.calculate_alpha(cross_section.d_2, cross_section.e, self.a, self.netta, self.ro_l)
-        self.sigma_c_cracked = self.calculate_concrete_stress_cracked(cross_section.d_2, cross_section.width, self.alpha, self.netta, self.ro_L)
+        self.sigma_c_cracked = self.calculate_concrete_stress_cracked(cross_section.d_2, cross_section.width, self.alpha, self.netta, self.ro_l)
        
     def calculate_Ec_middle(self, Ecm: int, phi_selfload: float, phi_liveload: float,
-                           Mg_SLS: float, Mp_SLS: float, M_p: float, loss: float) -> float:
+                           Mg_d: float, Mp_d: float, M_p: float, loss: float) -> float:
         ''' Function that calculates Ec_middle, based on effective elasticity modulus according to EC2 7.4.3(5)
         Args:
             Ecm(int):  elasticity modulus for concrete, from Material class [N/mm2]
             phi_selfload(float):  creep number for self-load, from Creep number class
             phi_liveload(float):  creep number for live-load, from Creep cnumber class
-            Mg_SLS(float):  characteristic self-load moment, from Load properties class[kNm]
-            Mp_SLS(float):  characteristic live-load moment, from Load properties class[kNm]
+            Mg_d(float):  self-load moment, from Load properties class[kNm]
+            Mp_dfloat):  live-load moment, from Load properties class[kNm]
             M_prestress(float):  moment because of prestressing [kNm]
             loss(float):  loss of prestress because of time effects [%]
         Returns:
@@ -54,7 +54,7 @@ class Cracked_Stress:
         
         M_prestress = M_p * (1 - loss / 100) # Moment because of prestresseding force including losses
 
-        Ec_middle = (abs(M_prestress) + Mg_SLS + Mp_SLS) / ( (abs(M_prestress) + Mg_SLS) / Ec_eff_selfload + Mp_SLS / Ec_eff_liveload) # Derivated from Sørensen (5.25)
+        Ec_middle = (abs(M_prestress) + Mg_d + Mp_d) / ( (abs(M_prestress) + Mg_d) / Ec_eff_selfload + Mp_d / Ec_eff_liveload) # Based on Sørensen (5.25)
         return Ec_middle
         
     def calculate_netta(self, Ep: int, Ec_middle: float) -> float:
@@ -92,24 +92,24 @@ class Cracked_Stress:
         Ns = eps_cs * Ep * Ap * 10 ** -3 # From Sørensen (6.15) 
         return Ns
     
-    def calculate_a(self, Mg_SLS: float, Mp_SLS: float, P0: float, M_p: float, loss: float, e: float, Ns: float) -> float:
+    def calculate_a(self, Mg_d: float, Mp_d: float, P0: float, M_p: float, loss: float, e: float, Ns: float) -> float:
         ''' Function that calculates distance 'a' equal to relation M/N 
         Args:
-            Mg_SLS(float):  selfload moment in SLS, from Load properties class [kNm]
-            Mp_SLS(float):  liveload moment in SLS, from Load properties class [kNm]
+            Mg_d(float):  selfload moment, from Load properties class [kNm]
+            Mp_d(float):  liveload moment, from Load properties class [kNm]
             P0(float):   design value of prestressign force, from Cross sectino class [N]
             M_p(float):   moment because of prestressing included losses, from Load properties class [kNm]
             loss(float):  loss of prestress, from Time effects class[%]
             e(float):  distance from bottom to prestressed reinforcement, from Cross section class[mm]
             Ns(float):  axial force in prestress because of free shrink [kN]
         Returns:
-            a(float):  factor for calculating alpha [mm]
+            a(float):  ratio between moment and axial force [mm]
         '''
         self.N = P0 * 10 ** -3 - Ns # From Sørensen fig. 6.8 
 
         self.M_prestress = M_p * (1 - loss/100) # Moment because of prestress force with losses
 
-        self.M = Mg_SLS + Mp_SLS + self.M_prestress + (Ns * e * 10 ** -3) # Total moment in cross section
+        self.M = Mg_d + Mp_d + self.M_prestress + (Ns * e * 10 ** -3) # Total moment in cross section
 
         a = 1000 * self.M/self.N  # From Sørensen fig. 6.8
         return a 
@@ -133,11 +133,10 @@ class Cracked_Stress:
         for num in roots:
             if 0 < num < 1:            
                 alpha = float(num)
-
                 return alpha
     
     def calculate_concrete_stress_cracked(self, d: float, width: float, alpha: float, netta: float, ro_l: float) -> float:
-        ''' Function that calculates concrete stress in top of cross section
+        ''' Function that calculates concrete stress in top of cross section, sørensen (6.25)
         Args:
             d(float):  effective height, from Cross section class[mm]
             width(float):  width of cross section, from Input class [mm]
@@ -145,7 +144,7 @@ class Cracked_Stress:
         Returns:
             sigma_c(float):  concrete stress in top [N/mm2]
         '''
-        sigma_c_cracked = (self.N * 10 ** 3) / (width * d * (0.5 * alpha - netta * ro_l * ((1 - alpha) / alpha)))
+        sigma_c_cracked = (-self.N * 10 ** 3) / (width * d * (0.5 * alpha - netta * ro_l * ((1 - alpha) / alpha)))
         return sigma_c_cracked
     
    

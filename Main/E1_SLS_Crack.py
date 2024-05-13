@@ -28,9 +28,9 @@ class Crack_control:
         '''
         self.k_c = self.calculate_kc(cross_section.cnom, cross_section.c_min_dur)
         self.crack_width = self.get_limit_value(exposure_class, self.k_c)
-        self.Ec_middle = self.calculate_E_middle(material.Ecm, creep_number.phi_selfload, creep_number.phi_liveload, load.M_SLS, load.Mg_SLS, load.Mp_SLS)
+        self.Ec_middle = self.calculate_E_middle(material.Ecm, creep_number.phi_selfload, creep_number.phi_liveload, load.M_Ed, load.Mg_d, load.Mp_d)
         self.alpha = self.calculate_alpha(material.Es, self.Ec_middle, cross_section.As, cross_section.width, cross_section.d_1)
-        self.sigma_s = self.calculate_reinforcement_stress(self.alpha, cross_section.width, cross_section.d_1, load.M_SLS, self.Ec_middle, material.Es, cross_section.As)
+        self.sigma_s = self.calculate_reinforcement_stress(self.alpha, cross_section.width, cross_section.d_1, load.M_Ed, self.Ec_middle, material.Es, cross_section.As)
         self.max_bar_diameter  = self.calculate_maximal_bar_diameter(self.crack_width, self.sigma_s)
         self.control_bar_diameter = self.control_of_bar_diameter(bar_diameter, self.max_bar_diameter)
         self.utilization = self.calculate_utilization_degree(bar_diameter, self.max_bar_diameter)
@@ -66,16 +66,16 @@ class Crack_control:
         else:
             raise ValueError(f"There is no exposure class called {exposure_class}")
         
-    def calculate_E_middle(self, Ecm: int, phi_selfload: float, phi_liveload: float, M_SLS: float, 
-                           Mg_SLS: float, Mp_SLS: float) -> float:
+    def calculate_E_middle(self, Ecm: int, phi_selfload: float, phi_liveload: float, M_Ed: float, 
+                           Mg_d: float, Mp_d: float) -> float:
         ''' Function that calculates E_middle, based on effective elasticity modulus according to EC2 7.4.3(5)
         Args:
             Ecm(int):  elasticity modulus for concrete, from Material class [N/mm2]
             phi_selfload(float):  creep number for self-load, from Creep number class
             phi_liveload(float):  creep number for live-load, from Creep cnumber class
-            Mg_SLS(float):  characteristic self-load moment, from Load properties class[kNm]
-            Mp_SLS(float):  characteristic live-load moment, from Load properties class[kNm]
-            M_SLS(float):  characteristic total load moment, from Load properties class[kNm]
+            Mg_d(float):  self-load moment, from Load properties class[kNm]
+            Mp_d(float):  live-load moment, from Load properties class[kNm]
+            M_Ed(float):  total load moment, from Load properties class[kNm]
         Returns:
             Ec_middle(float):  middle elasticity modulus [N/mm2]
         '''
@@ -83,7 +83,7 @@ class Crack_control:
 
         Ec_eff_liveload = Ecm / (1 + phi_liveload)
 
-        Ec_middle = M_SLS / (Mg_SLS / Ec_eff_selfload + Mp_SLS / Ec_eff_liveload) # From Sørensen (5.25)
+        Ec_middle = M_Ed / (Mg_d / Ec_eff_selfload + Mp_d / Ec_eff_liveload) # From Sørensen (5.25)
         return Ec_middle
     
         
@@ -104,9 +104,9 @@ class Crack_control:
 
         alpha = np.sqrt((netta * ro) ** 2 + 2 * netta * ro) - netta * ro # From Sørensen (5.5)
 
-        return min(1,alpha)
+        return alpha
 
-    def calculate_reinforcement_stress(self, alpha: float, width: float, d: float, M_Ed: float, Ec_middle: float, 
+    def calculate_reinforcement_stress(self, alpha: float, width: float, d: float, M: float, Ec_middle: float, 
                                         Es: int, As: float) -> float:
         ''' Function that calculates reinforcement stress
         The cross section is assumed cracked 
@@ -127,16 +127,8 @@ class Crack_control:
          
         EI_2 = Ec_middle * Ic2 + Es * Is2 # From Sørensen (5.8)
 
-        sigma = Es * (M_Ed * 10 ** 6 * (1 - alpha) * d) / (EI_2) # From Sørensen (5.55)
+        sigma = Es * (M * 10 ** 6 * (1 - alpha) * d) / (EI_2) # From Sørensen (5.55)
         
-        # limiting the stress to fit into table 7.2N from EC2
-        if sigma < 160:
-            sigma = 160
-        elif sigma > 450:
-            sigma = None
-        else:
-            sigma = sigma 
-
         return sigma
 
     def calculate_maximal_bar_diameter(self, w_max: float, sigma: float) -> float:
@@ -149,9 +141,19 @@ class Crack_control:
         Returns:
             max_bar_diameter(float):  maximum bar diameter to limit crack width [mm]
         '''
-        # If sigma is outside the range of the table, return None
+
+        # limiting the stress to fit into table 7.2N from EC2
+        if sigma < 160:
+            sigma = 160
+        elif sigma > 450:
+            sigma = None
+        else:
+            sigma = sigma 
+
+        # If sigma is outside the range of the table, return None    
         if sigma == None:
             max_bar_diameter = None
+
         else:
             Ø = ([[40, 32, 20, 16, 12, 10, 8, 6],[32, 25, 16, 12, 10, 8, 6, 5],[25, 16, 12, 8, 6, 5, 4, 0]])  #  Bar diameter matrix
             a = [160, 200, 240, 280, 320, 360, 400, 450]  #  Reinforcement tension vector
@@ -191,7 +193,7 @@ class Crack_control:
             utilization(float):  utilization degree for the maximum bar diameter [%], or a printed error
         '''
         if max_bar_diameter == None:
-            return (f'the stress is bigger that the maximum, and the crack utilization could not be executed')
+            return None#(f'the stress is bigger that the maximum, and the crack utilization could not be executed')
         else:
             utilization = (max_bar_diameter / bar_diameter) * 100
             return round(utilization,1)

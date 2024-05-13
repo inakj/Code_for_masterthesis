@@ -65,6 +65,7 @@ class Material:
             Fpk(float):  characteristic maximum force for prestressing [kN] 
             Fp01k(float):  characteristic 0.1% proof force [kN] 
             fp01k(float):  characteristic 0.1% proof stress [N/mm2] 
+            fpd(float):  design 0.1% proof stress [N/mm2] 
         '''
 
     # LOAD- AND MATERIALFACTORS
@@ -135,6 +136,7 @@ class Material:
         self.Fpk = self.get_Fpk(index_prestress)
         self.Fp01k = self.get_Fp01k(index_prestress)
         self.fp01k = self.calculate_fp01k(self.Fp01k, self.Ap_strand, index_prestress)
+        self.fpd = self.calculate_fpd(self.fp01k, index_prestress)
         
        
 #-------------CONCRETE PARAMETERS---------------------------------------------------------------------
@@ -508,7 +510,7 @@ class Material:
                      327, 26.2, 24.1, 35.6, 52.4, 53,84]
             return Fp01k[index_prestress]
     
-    def calculate_fp01k(self, Fp01k: float ,Ap: float, index_prestress: int)-> float:
+    def calculate_fp01k(self, Fp01k: float, Ap: float, index_prestress: int)-> float:
         '''Calculate characteristic 0.1% proof tension for prestress
         Args:
             Fp01k(float):  characteristic 0.1% proof force [kN]
@@ -520,8 +522,21 @@ class Material:
         if index_prestress == None:
             return 0
         else: 
-            fp01k = Fp01k * 10 ** 3 / Ap
-            self.fpd: float = fp01k / self.gamma_prestressed_reinforcement
+            fp01k = Fp01k * 10 ** 3 / Ap 
             return fp01k
+        
+    def calculate_fpd(self, fp01k: float, index_prestress: int)-> float:
+        '''Calculate design c 0.1% proof tension for prestress
+        Args:
+            fp01k(float):  characteristic 0.1% proof stress [kN]
+            index(int):  for determining parameters for prestress or "None" if the name do not exist
+        Returns:
+            fpd(float):  design 0.1% proof stress [N/mm2] or 0 if the index == None
+        '''
+        if index_prestress == None:
+            return 0
+        else: 
+            fpd: float = fp01k / self.gamma_prestressed_reinforcement 
+            return fpd
     
     

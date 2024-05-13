@@ -26,7 +26,7 @@ class Reinforcement_control:
             utilization:  utilization degree for reinforcement [%]
             utilization_shear:  utilization degree for shear reinforcement [%]
         '''
-        self.As_necessary = self.calculate_necessary_reinforcement(load.M_ULS, cross_section.d_1, material.fyd, material.lambda_factor, ULS_nonprestressed.alpha)
+        self.As_necessary = self.calculate_necessary_reinforcement(load.M_Ed, cross_section.d_1, material.fyd, material.lambda_factor, ULS_nonprestressed.alpha)
         self.As_min = self.calculate_As_min(material.fctm, material.fyk, cross_section.width, cross_section.d_1)
         self.As_max = self.calculate_As_max(cross_section.Ac)
         self.control = self.control_reinforcement(cross_section.As, self.As_necessary, self.As_max, self.As_min)
@@ -64,7 +64,7 @@ class Reinforcement_control:
         Returns:
             As_min(float):  Minimum reinforcement [mm2]
         '''
-        As_min = min(0.26 * (fctm / fyk) * width * d, 0.0013 * width * d)
+        As_min = max(0.26 * (fctm / fyk) * width * d, 0.0013 * width * d)
         return As_min
     
     def calculate_As_max(self, Ac: float) -> float:
@@ -88,7 +88,7 @@ class Reinforcement_control:
         Returns:
             As_control(bool):  Return True if area is suifficent or False if its not suifficent
         '''
-        if As > As_max or As < min(As_min,As_necessary):
+        if As > As_max or As < As_min or As < As_necessary:
             return False
         else: 
             return True
@@ -103,13 +103,13 @@ class Reinforcement_control:
         Returns:
             Asw_control(bool):  Control of shear reinforcement, return True or False
         '''
-        ro_w_min = 0.1  * np.sqrt(fck) / fyk # From EC2 (9.5N)
+        self.ro_w_min = 0.1  * np.sqrt(fck) / fyk # From EC2 (9.5N)
 
-        alpha = 90 # vertical bars
+        alpha = np.pi/2  # vertical bars, 90 degrees
 
-        b_w = width # flange width = cross section width
+        self.b_w = width # flange width = cross section width
 
-        self.Asw_min = ro_w_min * b_w * np.sin(alpha) # From EC2 (9.4)
+        self.Asw_min = self.ro_w_min * self.b_w * np.sin(alpha) # From EC2 (9.4)
 
         if self.Asw_min < Asw:
             return True

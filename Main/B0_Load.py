@@ -20,17 +20,17 @@ class Load_properties:
             g_d(float):  design selfload, including load factor [kN/m]
             p_d(float):  design liveload, including load factor [kN/m]
             q_d(float):  design load, including load factor [kN/m]
-            Mg_SLS(float):  max moment in middle of beam because of characteristic selfload [kNm]
-            Mp_SLS(float):  max moment in middle of beam because of characteristic liveload [kNm]
-            M_SLS(float):  max total moment in middle of beam because of characteristic load [kNm]
-            Mg_ULS(float):  max moment in middle of beam because of design selfload [kNm]
-            Mp_ULS(float):  max moment in middle of beam because of design live load [kNm]
-            M_ULS(float):  max total moment in middle of beam because of design load [kNm]
-            V_SLS(float):  max shear force near supports because of characteristic total load [kN]
-            V_ULS(float):  max shear force near supports becasue of design total load [kN]
+            Mg_k(float):  max moment in middle of beam because of characteristic selfload [kNm]
+            Mp_k(float):  max moment in middle of beam because of characteristic liveload [kNm]
+            M_k(float):  max total moment in middle of beam because of characteristic load [kNm]
+            Mg_d(float):  max moment in middle of beam because of design selfload [kNm]
+            Mp_d(float):  max moment in middle of beam because of design live load [kNm]
+            M_Ed(float):  max total moment in middle of beam because of design load [kNm]
+            V_k(float):  max shear force near supports because of characteristic total load [kN]
+            V_Ed(float):  max shear force near supports becasue of design total load [kN]
             sigma_p_max(float):  design value of prestressing stress [N/mm2]
-            P0(float):   design value of prestressign force [N]
-            M_prestressed(float):  moment because of prestressing force included loss [kNm]
+            P0_d(float):   design value of prestressign force [N]
+            M_prestress(float):  moment because of prestressing force included loss [kNm]
 
         '''
         self.g_k: float = selfload
@@ -39,17 +39,17 @@ class Load_properties:
         self.g_d = self.calculate_design_values_of_load(self.g_k, self.p_k, material.gamma_selfload, material.gamma_liveload)[0]
         self.p_d = self.calculate_design_values_of_load(self.g_k, self.p_k, material.gamma_selfload, material.gamma_liveload)[1]
         self.q_d = self.calculate_design_values_of_load(self.g_k, self.p_k, material.gamma_selfload, material.gamma_liveload)[2]
-        self.Mg_SLS = self.calculate_Mg_SLS(self.g_k, length)
-        self.Mp_SLS = self.calculate_Mp_SLS(self.p_k, length)
-        self.M_SLS = self.calculate_M_SLS(self.Mg_SLS, self.Mp_SLS)
-        self.Mg_ULS = self.calculate_Mg_ULS(self.g_d, length)
-        self.Mp_ULS = self.calculate_Mg_ULS(self.p_d, length)
-        self.M_ULS = self.calculate_M_ULS(self.Mg_ULS, self.Mp_ULS)
-        self.V_SLS = self.calculate_V_SLS(self.q_k, length)
-        self.V_ULS = self.calculate_V_ULS(self.q_d, length)
+        self.Mg_k = self.calculate_Mg_k(self.g_k, length)
+        self.Mp_k = self.calculate_Mp_k(self.p_k, length)
+        self.M_k = self.calculate_M_k(self.Mg_k, self.Mp_k)
+        self.Mg_d = self.calculate_Mg_d(self.g_d, length)
+        self.Mp_d = self.calculate_Mg_d(self.p_d, length)
+        self.M_Ed = self.calculate_M_Ed(self.Mg_d, self.Mp_d)
+        self.V_k = self.calculate_V_k(self.q_k, length)
+        self.V_Ed = self.calculate_V_Ed(self.q_d, length)
         self.sigma_p_max = self.calculate_sigma_p_max(material.fpk, material.fp01k)
-        self.P0 = self.calculate_P0_max(self.sigma_p_max, cross_section.Ap)
-        self.M_prestress = self.calculate_M_prestressed(self.P0, cross_section.e)
+        self.P0_d = self.calculate_P0_max(self.sigma_p_max, cross_section.Ap)
+        self.M_prestress = self.calculate_M_prestressed(self.P0_d, cross_section.e)
 
     def calculate_q_k(self, g_k: float, p_k: float) -> float:
         '''Calculate the total characteristic load
@@ -84,99 +84,97 @@ class Load_properties:
         design_loads = [g_d, p_d, q_d]
         return design_loads
 
-    def calculate_Mg_SLS(self ,g: float, length: float) -> float:
+    def calculate_Mg_k(self ,g: float, length: float) -> float:
         ''' Function that calculates characteristic moment because of selfload
         Args:
             g(float):  characteristic selfload [kN/m]
             length(float): length of beam [m]
         Returns:
-            Mg_SLS(float):  moment because of characteristic selfload [kNm]
+            Mg_k(float):  moment because of characteristic selfload [kNm]
         '''
-        Mg_SLS = (g * length ** 2) / 8
-        return Mg_SLS
+        Mg_k = (g * length ** 2) / 8
+        return Mg_k
     
-    def calculate_Mp_SLS(self, p: float, length: float) -> float:
+    def calculate_Mp_k(self, p: float, length: float) -> float:
         '''Function that calculates characteristic moment because of liveload
 
         Args:
             p(float):  characteristic liveload [kN/m]
             length(float): length of beam [m]
         Returns:
-            Mp_SLS(float):  moment because of characteristic liveload [kNm]
+            Mp_k(float):  moment because of characteristic liveload [kNm]
         '''
-        Mp_SLS = (p * length ** 2) / 8
-        return Mp_SLS
+        Mp_k = (p * length ** 2) / 8
+        return Mp_k
     
 
-    def calculate_M_SLS(self, Mg_SLS: float, Mp_SLS: float) -> float:
+    def calculate_M_k(self, Mg_k: float, Mp_k: float) -> float:
         ''' Function that calculates SLS moment
         Args:
-            Mg_SLS(float):  moment because of characteristic selfload [kNm]
-            Mp_SLS(float):  moment because of characteristic liveload [kNm]
+            Mg_k(float):  moment because of characteristic selfload [kNm]
+            Mp_k(float):  moment because of characteristic liveload [kNm]
         Returns:
-            M_SLS(float):  total moment because of characteristic load [kNm]
+            M_k(float):  total moment because of characteristic load [kNm]
         '''
-        M_SLS= Mg_SLS + Mp_SLS
-        return M_SLS
+        M_k = Mg_k + Mp_k
+        return M_k
     
-    def calculate_Mg_ULS(self, g: float, length: float) -> float:
+    def calculate_Mg_d(self, g: float, length: float) -> float:
         '''Function that calculates design moment because of selfload
 
         Args:
             g(float):  design selfload [kN/m]
             length(float): length of beam [m]
         Returns:
-            Mg_ULS(float):  moment because of design selfload [kNm]
+            Mg_d(float):  moment because of design selfload [kNm]
         '''
-        Mg_ULS = (g * length ** 2) / 8
-        return Mg_ULS
+        Mg_d = (g * length ** 2) / 8
+        return Mg_d
 
-    def calculate_Mp_ULS(self, p: float, length: float) -> float:
+    def calculate_Mp_d(self, p: float, length: float) -> float:
         '''Function that calculates design moment because of liveload
 
         Args:
             p(float):  design liveload [kN/m]
             length(float): length of beam [m]
         Returns:
-            Mp_ULS(float):  moment because of design liveload [kNm]
+            Mp_d(float):  moment because of design liveload [kNm]
         '''
-        Mp_ULS = (p * length ** 2) / 8
-        return Mp_ULS
+        Mp_d = (p * length ** 2) / 8
+        return Mp_d
 
-    def calculate_M_ULS(self, Mg_ULS: float, Mp_ULS: float) -> float:
+    def calculate_M_Ed(self, Mg_d: float, Mp_d: float) -> float:
         ''' Function that calculates ULS moment
         Args:
-            Mg_ULS(float):  moment because of design selfload [kNm]
-            Mp_ULS(float):  moment because of design liveload [kNm]
+            Mg_d(float):  moment because of design selfload [kNm]
+            Mp_d(float):  moment because of design liveload [kNm]
         Returns:
-            M_ULS(float):  total moment because of design load [kNm]
+            M_Ed(float):  total moment because of design load [kNm]
         '''
-        M_ULS = Mg_ULS + Mp_ULS
-        return M_ULS
+        M_Ed = Mg_d + Mp_d
+        return M_Ed
 
-    def calculate_V_SLS(self, q: float, length: float) -> float:
-        ''' Function that calculates V_SLS according to table 3.1 
-        in "Stålkonstrukjoner; profiler og formler"
+    def calculate_V_k(self, q: float, length: float) -> float:
+        ''' Function that calculates shear force
         Args:
             q(float):  total characteristic load [kN/m]
             length(float): length of beam [m]
         Returns:
-            V_SLS(float):  shear force because of characteristic load [kN]
+            V_k(float):  shear force because of characteristic load [kN]
         '''
-        V_SLS = q * length / 2 
-        return V_SLS #
+        V_k = q * length / 2 
+        return V_k
     
-    def calculate_V_ULS(self, q: float, length: float) -> float:
-        ''' Function that calculates V_ULS according to table 3.1 
-        in "Stålkonstrukjoner; profiler og formler"
+    def calculate_V_Ed(self, q: float, length: float) -> float:
+        ''' Function that calculates shear force
         Args:
             q(float):  total design load [kN/m]
             length(float): length of beam [m]
         Returns:
-            V_ULS(float):  shear force because of design load [kN]
+            V_Ed(float):  shear force because of design load [kN]
         '''
-        V_ULS = q * length / 2 
-        return V_ULS 
+        V_Ed = q * length / 2 
+        return V_Ed 
     
 # ---------------- PRESTRESS VALUES --------------------------------------------
 

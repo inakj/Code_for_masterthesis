@@ -43,7 +43,7 @@ class Stress:
         '''
         delta_eps_p = abs(sigma_c_prestress) / Ecm # Strain reduction in prestressed reinforcement
 
-        delta_sigma_p = delta_eps_p * Ep # Stress reduction iin prestressed reinforcement
+        delta_sigma_p = delta_eps_p * Ep # Stress reduction in prestressed reinforcement
 
         sigma_p_uncracked = sigma_p_max - delta_sigma_p - loss # The total stress in prestress for uncracked cross section
         return sigma_p_uncracked
@@ -63,13 +63,13 @@ class Stress:
         Returns:
             sigma_p(float):  stress in prestressed reinforcement [N/mm2]
         '''
-        self.eps_c = abs(sigma_c_cracked) / E_middle # Concrete strain in top 
+        eps_c = abs(sigma_c_cracked) / E_middle # Concrete strain in top 
 
-        self.delta_eps_p = self.eps_c * (1 - alpha) / alpha # Strain near prestressed reinforcement
+        delta_eps_p = eps_c * (1 - alpha) / alpha # Strain near prestressed reinforcement
 
-        self.delta_sigma_p = (self.delta_eps_p - eps_cs) * Ep # Stress reduction in prestressed reinforcement
+        delta_sigma_p = (delta_eps_p - eps_cs) * Ep # Stress reduction in prestressed reinforcement
 
-        sigma_p_cracked = sigma_p_max - abs(self.delta_sigma_p) - loss # The total stress in prestress for cracked cross section
+        sigma_p_cracked = sigma_p_max - abs(delta_sigma_p) - loss # The total stress in prestress for cracked cross section
         return sigma_p_cracked
     
     
@@ -89,15 +89,28 @@ class Stress:
         self.allowed_tension = fctm # From EC2 table 3.1
 
         if control_M_cr == True:
-            if self.allowed_pressure >= abs(sigma_c_cracked): 
-                return True
+            if sigma_c_cracked < 0:
+                if self.allowed_pressure < sigma_c_cracked: 
+                    return True
+                else:
+                    return False
             else:
-                return False
+                if self.allowed_tension > sigma_c_cracked:
+                    return True
+                else:
+                    return False
         else: 
-            if self.allowed_pressure >= max(sigma_c_uncracked[0],sigma_c_uncracked[1]) and self.allowed_tension > sigma_c_uncracked[2]:
-                return True
-            else:
-                return False
+            for i in range (0,len(sigma_c_uncracked)):
+                if sigma_c_uncracked[i] < 0:
+                    if self.allowed_pressure < sigma_c_uncracked[i]:
+                        return True
+                    else:
+                        return False
+                else:
+                    if self.allowed_tension > sigma_c_uncracked[i]:
+                        return True
+                    else:
+                        return False
    
         
  

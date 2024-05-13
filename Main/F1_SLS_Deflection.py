@@ -43,37 +43,37 @@ class Deflection:
             if the deflection is to big
         
         '''
-        self.Ec_middle = self.calculate_E_middle(material.Ecm, creep.phi_selfload, creep.phi_liveload, load.M_SLS, load.Mg_SLS, load.Mp_SLS)
+        self.Ec_middle = self.calculate_E_middle(material.Ecm, creep.phi_selfload, creep.phi_liveload, load.M_Ed, load.Mg_d, load.Mp_d)
         self.netta = self.calculate_netta(material.Es, self.Ec_middle)
         self.ro_l = self.calculate_ro(cross_section.As, cross_section.width, cross_section.d_1)
         self.alpha_uncracked = self.calculate_alpha_uncracked(self.netta, cross_section.Ac, cross_section.height, cross_section.As, cross_section.d_1)
         self.EI_1 = self.calculate_EI_uncracked(cross_section.width, cross_section.height, self.alpha_uncracked, cross_section.As, cross_section.d_1, self.Ec_middle, material.Es)
-        self.deflection_uncracked = self.calculate_deflection_uncracked(length, load.g_k, load.p_k, factor, self.EI_1)
+        self.deflection_uncracked = self.calculate_deflection_uncracked(length, load.g_d, load.p_d, factor, self.EI_1)
         self.alpha_cracked = self.calculate_alpha_cracked(self.netta, self.ro_l)
         self.EI_2 = self.calculate_EI_cracked(self.alpha_cracked, cross_section.width, cross_section.d_1, self.Ec_middle, cross_section.As, material.Es)
-        self.deflection_cracked = self.calculate_deflection_cracked(length, load.g_k, load.p_k, factor, self.EI_2)
-        self.M_cr = self.calculate_M_cr(material.fctm, self.Ic1, self.netta, self.Is1, cross_section.height, self.alpha_cracked, cross_section.d_1)
-        self.control_Mcr = self.control_of_Mcr(self.M_cr, load.M_ULS)
+        self.deflection_cracked = self.calculate_deflection_cracked(length, load.g_d, load.p_d, factor, self.EI_2)
+        self.M_cr = self.calculate_M_cr(material.fctm, self.Ic1, self.netta, self.Is1, cross_section.height, self.alpha_uncracked, cross_section.d_1)
+        self.control_Mcr = self.control_of_Mcr(self.M_cr, load.M_Ed)
         self.eps_cd0 = self.calculate_eps_cd_0(cement_class, RH, material.fcm)
         self.eps_cd = self.calculate_eps_cd(self.eps_cd0, cross_section.Ac, cross_section.width, cross_section.height)
         self.eps_ca = self.calculate_eps_ca(material.fck)
         self.eps_cs = self.calculate_eps_cs(self.eps_cd, self.eps_ca)
         self.K_s = self.calculate_curvature(self.eps_cs, self.netta, cross_section.As, cross_section.Ac, cross_section.height, cross_section.d_1, cross_section.width)
         self.deflection_shrinkage = self.calculate_deflection_shrinkage(self.K_s, length)
-        self.total_deflection = self.calculate_deflection_tension_stiffening(self.M_cr, load.M_SLS, self.control_Mcr, self.deflection_shrinkage, self.deflection_cracked, self.deflection_uncracked)
+        self.total_deflection = self.calculate_deflection_tension_stiffening(self.M_cr, load.M_Ed, self.control_Mcr, self.deflection_shrinkage, self.deflection_cracked, self.deflection_uncracked)
         self.control = self.control_deflection(length, self.total_deflection)
         self.utilization = self.calculate_utilization_degree(self.total_deflection)
 
-    def calculate_E_middle(self, Ecm: int, phi_selfload: float, phi_liveload: float, M_SLS: float, 
-                           Mg_SLS: float, Mp_SLS: float) -> float:
+    def calculate_E_middle(self, Ecm: int, phi_selfload: float, phi_liveload: float, M_Ed: float, 
+                           Mg_d: float, Mp_d: float) -> float:
         ''' Function that calculates E_middle, based on effective elasticity modulus according to EC2 7.4.3(5)
         Args:
             Ecm(int):  elasticity modulus for concrete, from Material class [N/mm2]
             phi_selfload(float):  creep number for self-load, from Creep number class
             phi_liveload(float):  creep number for live-load, from Creep cnumber class
-            Mg_SLS(float):  characteristic self-load moment, from Load properties class[kNm]
-            Mp_SLS(float):  characteristic live-load moment, from Load properties class[kNm]
-            M_SLS(float):  characteristic total load moment, from Load properties class[kNm]
+            Mg_d(float):  self-load moment, from Load properties class[kNm]
+            Mp_d(float):  live-load moment, from Load properties class[kNm]
+            M_Ed(float):  total load moment, from Load properties class[kNm]
         Returns:
             Ec_middle(float):  middle elasticity modulus [N/mm2]
         '''
@@ -81,7 +81,7 @@ class Deflection:
 
         Ec_eff_liveload = Ecm / (1 + phi_liveload) # Effective elasticity modulus for live-load from EC2 (7.20)
 
-        Ec_middle = M_SLS / (Mg_SLS / Ec_eff_selfload + Mp_SLS / Ec_eff_liveload) # From Sørensen (5.25)
+        Ec_middle = M_Ed / (Mg_d / Ec_eff_selfload + Mp_d / Ec_eff_liveload) # From Sørensen (5.25)
         return Ec_middle
     
     def calculate_netta(self, Es: int, Ec_middle: float) -> float:
@@ -181,7 +181,7 @@ class Deflection:
         Returns:
             EI_2(float):  bending stiffnes for cracked cross section [Nmm2]
         '''
-        self.Ic2 = 0.5 * alpha ** 2 * (1 - alpha/3) * width * d ** 3  # From Sørensen (5.6)
+        self.Ic2 = (width * (alpha * d) ** 3) / 3 # From Sørensen (5.6)
 
         self.Is2 = As * ((1 - alpha) * d) ** 2 # From Sørensen (5.7)
 
@@ -216,7 +216,7 @@ class Deflection:
         Returns:
             M_cr(float):  crack moment [kNm]
         '''
-        M_cr = fctm * (Ic1 + netta * Is1) / (h - alpha_uncracked * d) # From Sørensen (5.20)
+        M_cr = fctm * ((Ic1 + netta * Is1)) / (h - alpha_uncracked * d) # From Sørensen (5.20)
         return M_cr * 10 ** (-6)
     
     def control_of_Mcr(self, M_cr: float, M_Ed: float) -> float:
@@ -224,7 +224,7 @@ class Deflection:
         is smaller than the design moment. Design moment with load factors is used to give a conservative solution 
         Args:
             M_cr(float):  crack moment [kNm]
-            M_Ed(float):  design moment in ULS, from Load properties class [kNm]
+            M_Ed(float):  design moment, from Load properties class [kNm]
         Returns:        
             True or False(boolean):  True if cracked cross section. False if uncracked cross section
         '''
@@ -284,7 +284,7 @@ class Deflection:
         k_h_vector = [1,0.85,0.75,0.7]
         for i in range(len(h_0_vector)-1):
             if h_0_vector[i+1] >= h_0 >= h_0_vector[i]:
-                k_h = (k_h_vector[i+1] - k_h_vector[i]) / (h_0_vector[i+1] - h_0_vector[i]) * (h_0 - h_0_vector[i]) + k_h_vector[i]
+                k_h = ((k_h_vector[i+1] - k_h_vector[i]) / (h_0_vector[i+1] - h_0_vector[i]) ) * (h_0 - h_0_vector[i]) + k_h_vector[i]
 
         beta_ds = 1 # From EC2 (3.10) with t = infinity 
 
@@ -360,7 +360,7 @@ class Deflection:
         with creep is different for cracked and uncracked. 
        Args:
             M_cr(float):  crack moment [kNm]
-            M_Ed(float):  design moment in ULS, from Load propeties class [kNm]
+            M_Ed(float):  design moment, from Load propeties class [kNm]
             control(bool):  True if cracked cross section. False if uncracked cross section
             deflection_shrinkage(float):  delfection only because of shrinkage [mm]
             deflection_cracked(float):  deflection including creep for cracked cross section [mm]

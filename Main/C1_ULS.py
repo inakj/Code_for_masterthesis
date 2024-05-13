@@ -35,10 +35,10 @@ class ULS:
             material.Es, material.fcd, cross_section.width, cross_section.d_1, material.fyd, material.lambda_factor, material.netta)
         self.M_Rd = self.calculate_M_Rd(self.alpha, material.fcd, cross_section.width, cross_section.d_1, material.lambda_factor, material.netta) 
         self.V_Rd = self.calculate_V_Rd(cross_section.d_1, cross_section.As, cross_section.width, material.fcd, material.gamma_concrete, material.fck) 
-        self.M_control = self.control_of_M_cap(self.M_Rd, load.M_ULS)
-        self.V_control = self.control_of_V_cap(self.V_Rd, load.V_ULS, Asw, cross_section.d_1, material.fyd, material.fcd, cross_section.width, material.fck)
-        self.M_utilization = self.calculate_utilization_M(self.M_Rd, load.M_ULS)
-        self.V_utilization = self.calculate_utilization_V(self.V_Rd, load.V_ULS)
+        self.M_control = self.control_of_M_cap(self.M_Rd, load.M_Ed)
+        self.V_control = self.control_of_V_cap(self.V_Rd, load.V_Ed, Asw, cross_section.d_1, material.fyd, material.fcd, cross_section.width, material.fck)
+        self.M_utilization = self.calculate_utilization_M(self.M_Rd, load.M_Ed)
+        self.V_utilization = self.calculate_utilization_V(self.V_Rd, load.V_Ed)
     
     def calculate_alpha(self, eps_cu3: float, eps_yd: float, As: float, Es: float, fcd: float,
                         width: float, d: float, fyd: float, lambda_factor: float, netta: float) -> float:

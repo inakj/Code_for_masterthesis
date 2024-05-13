@@ -26,10 +26,10 @@ class Reinforcement_control_prestressed:
         '''
         self.As = self.calculate_As_min(material.fctm, material.fyk, cross_section.width, cross_section.d_2)
         self.Asw_control = self.control_reinforcement_shear(material.fck, material.fyk, cross_section.width, Asw)
-        self.Ap_necessary= self.calculate_prestress_reinforcement(load.M_ULS, cross_section.d_2, material.fpd, material.lambda_factor, ULS_prestressed.alpha, self.As)
+        self.Ap_necessary= self.calculate_prestress_reinforcement(load.M_Ed, cross_section.d_2, material.fpd, material.lambda_factor, ULS_prestressed.alpha)
         self.control = self.control_prestress_reinforcement(self.Ap_necessary, cross_section.Ap)
         self.utilization = self.calculate_utilization_degree_Ap(self.Ap_necessary, cross_section.Ap)
-        self.utilization_shear = self.calculate_utilization_degree_Asw(self.Asw_min, Asw)
+        self.utilization_shear = self.calculate_utilization_degree_Asw(Asw)
 
 
     def calculate_As_min(self, fctm: float, fyk: int, width: float, d: float) -> float:
@@ -42,7 +42,7 @@ class Reinforcement_control_prestressed:
         Returns:
             As_min(float):  Minimum reinforcement [mm2]
         '''
-        As_min = min(0.26 * (fctm / fyk) * width * d, 0.0013 * width * d)
+        As_min = max(0.26 * (fctm / fyk) * width * d, 0.0013 * width * d)
         return As_min
     
     def control_reinforcement_shear(self, fck: float, fyk: float, width: float, Asw: float) -> bool:
@@ -57,7 +57,7 @@ class Reinforcement_control_prestressed:
         '''
         ro_w_min = 0.1  * np.sqrt(fck) / fyk # From EC2 (9.5N)
 
-        alpha = 90 # vertical bars
+        alpha =  np.pi/2  # vertical bars, 90 degress
 
         b_w = width # flange width = cross section width
 
@@ -68,8 +68,9 @@ class Reinforcement_control_prestressed:
         else:
             return False
         
-    def calculate_prestress_reinforcement(self, M_Ed: float, d: float, fpd: float, lambda_factor: float, alpha: float,As_min: float) -> float:
-        ''' Function that calculates necessary prestress reinforcement
+    def calculate_prestress_reinforcement(self, M_Ed: float, d: float, fpd: float, lambda_factor: float, alpha: float) -> float:
+        ''' Function that calculates necessary prestress reinforcement. Assumed that prestressed reinforcement take 
+        all external load.
         Args: 
             M_Ed(float):  design moment, from Load properties class [kNm]
             d(float):  effective height, from Cross section class [mm]
@@ -80,7 +81,7 @@ class Reinforcement_control_prestressed:
             Ap_necessary(float):  Necessary prestress reinforcement [mm2]
         '''
         z = (1- 0.5 * lambda_factor * alpha) * d # Derivated from Sørensen (4.13) 
-        Ap_necessary = (M_Ed * 10  ** 6) / ( z * fpd) - As_min # Derivated from Sørensen (4.26)
+        Ap_necessary = (M_Ed * 10  ** 6) / ( z * fpd) # Derivated from Sørensen (4.26)
         return Ap_necessary
     
     def control_prestress_reinforcement(self, Ap_necessary: float, Ap: float) -> bool:

@@ -33,12 +33,12 @@ class ULS_prestress_and_ordinary:
         self.alpha = self.calculate_alpha(material.eps_cu3, cross_section.Ap, material.Ep, material.fcd, self.eps_diff, cross_section.width, cross_section.d_2, material.fpd, material.lambda_factor,
                                           material.netta, material.fyd, cross_section.As)
         self.M_Rd = self.calculate_moment_capacity(self.alpha, material.fcd, cross_section.width, cross_section.d_2, material.lambda_factor, material.netta, material.fyd, cross_section.As, cross_section.cnom)
-        self.M_control = self.control_moment(load.M_ULS, load.M_prestress, self.M_Rd)
+        self.M_control = self.control_moment(load.M_Ed, load.M_prestress, self.M_Rd)
         self.V_Rd = self.calc_shear_capacity(cross_section.d_2, cross_section.Ac, cross_section.width, cross_section.Ap, material.fcd, material.gamma_concrete, material.fck, load.P0, 
-                                             material.gamma_prestressed_reinforcement, time_effect.loss)
-        self.V_control = self.control_V(self.V_Rd, load.V_ULS, Asw, cross_section.d_2, material.fyd, material.fck, cross_section.width, material.fcd)
+                                             material.gamma_prestressed_reinforcement, time_effect.loss_percentage)
+        self.V_control = self.control_V(self.V_Rd, load.V_Ed, Asw, cross_section.d_2, material.fyd, material.fck, cross_section.width, material.fcd)
         self.M_utilization = self.calculate_utilization_M(self.M_Rd)
-        self.V_utilization = self.calculate_utilization_V(self.V_Rd, load.V_ULS)
+        self.V_utilization = self.calculate_utilization_V(self.V_Rd, load.V_Ed)
     
     def calculate_strain_diff(self, sigma_p: float, Ep: int, loss: float) -> float:
         ''' Function that calculates difference in strain because of losses. Based on Sørensen (6.4).
@@ -76,7 +76,7 @@ class ULS_prestress_and_ordinary:
         Returns:
             alpha(float):  Compression-zone-height factor 
         '''
-        alpha_b = eps_cu3 / (eps_cu3 + fpd / (Ep - eps_diff)) # Sørensen (7.7)
+        alpha_b = eps_cu3 / (eps_cu3 + fpd / Ep - eps_diff) # Sørensen (7.7)
 
         Apb = (netta * lambda_factor * alpha_b * width * d * fcd + fyd * As)/ fpd # Derivated from Sørensen (7.8)
 
@@ -111,17 +111,17 @@ class ULS_prestress_and_ordinary:
         M_Rd = netta * lambda_factor * alpha * (1 - 0.5 * lambda_factor * alpha) * fcd * width * d ** 2 + fyd * As * (d - cnom)  # Derivated from Sørensen (4.14)
         return M_Rd *  10 ** -6
     
-    def control_moment(self, M_ULS: float, M_p: float, M_Rd: float) -> bool:
+    def control_moment(self, M_Ed: float, M_p: float, M_Rd: float) -> bool:
         ''' Function that control moment capacity 
         Args:   
-            M_ULS(float):  design moment in ULS, from Load properties class [kNm]
+            M_Ed(float):  design moment, from Load properties class [kNm]
             M_p(float):  moment because of prestressing, from Load properties class [kNm]
             M_Rd(float):  moment capacity [kNm]
         Returns:
             True or False(boolean):  True if capacity is suifficient, False if not
         '''
         # Moment from load and prestress force: 
-        self.M_Ed = M_ULS + M_p
+        self.M_Ed = M_Ed + M_p
 
         if M_Rd >= self.M_Ed:
             return True
@@ -145,9 +145,9 @@ class ULS_prestress_and_ordinary:
         Returns:
             V_Rd(float):  shear capacity [kN]
         '''
-        k = min(1 + np.sqrt(200/d),2)
+        k = min(1 + np.sqrt(200 / d),2)
 
-        ro_l = min(Ap/(width * d),0.02)
+        ro_l = min(Ap / (width * d),0.02)
 
         N_Ed = abs(P0) * gamma_prestress * (1 - loss/100) # Axial force because of prestress force
 
@@ -167,20 +167,20 @@ class ULS_prestress_and_ordinary:
 
         return V_Rd 
         
-    def control_V(self, V_Rd: float, V_ULS: float, Asw: float, d: float, fyd: float, fck: float, width: float, fcd: float) -> bool:
+    def control_V(self, V_Rd: float, V_Ed: float, Asw: float, d: float, fyd: float, fck: float, width: float, fcd: float) -> bool:
         ''' Function that control shear capacity compared with design shear force. Also, if the 
         capacity is not suifficent, the function checks if the shear capacity is good enough according 
         to EC2 6.2.3(3) where there is calculation-based need for shear reinforcement. 
         Args:
             V_Rd(float):  Shear capacity [kNm]
-            V_ULS(float):  Design shear force, from Load properties class [kNm]
+            V_Ed(float):  Design shear force, from Load properties class [kNm]
             Asw(float):  area of shear reinforcement per meter, from Input class [mm2/mm] 
             d(float):  effective height, from Cross section class[mm]
             fyd(float):  design tension strength in reinforcement , from Material class [N/mm2]
         Returns:
             "True" if the shear capacity is suifficient and "False" if its not 
         '''
-        if V_Rd >= V_ULS:
+        if V_Rd >= V_Ed:
             return True
         else:
             if 0 < self.sigma_cp <= 0.25 * fcd:
@@ -195,7 +195,7 @@ class ULS_prestress_and_ordinary:
             #  Shear capacity if there is calculation-based need for shear reinforcement: 
             self.V_Rds = min(Asw * 0.9 * d * fyd * 10 ** -3, alpha_cw * v * width * 0.9 * d * fcd * 10 ** -3) # from EC2 (6.8)
 
-            if self.V_Rds >= V_ULS:
+            if self.V_Rds >= V_Ed:
                 self.V_Rd = self.V_Rds
                 return True
             else:

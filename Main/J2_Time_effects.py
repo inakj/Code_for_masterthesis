@@ -22,13 +22,13 @@ class time_effects:
             loss(float):  stress reduction in prestress because for relaxation, shrink and creep [N/mm2]
             loss_percentage(float):  stress reduction in prestress because for relaxation, shrink and creep [%]
         '''
-        self.delta_relaxation = self.calculate_delta_sigma_pr(material.fpk, material.fp01k, cross_section.e)
-        self.loss = self.calculate_stress_reduction(deflection.eps_cs, material.Ep, material.Ecm, self.delta_relaxation, creep_number.phi_selfload, creep_number.phi_liveload,
+        self.delta_relaxation = self.calculate_delta_sigma_pr(material.fpk, material.fp01k,500000)
+        self.loss = self.calculate_stress_reduction(deflection.eps_cs, material.Ep, material.Ecm, self.delta_relaxation, creep_number.phi_selfload,
                                                     stress_uncracked.sigma_c_uncracked[2], cross_section.Ap, cross_section.Ac, cross_section.Ic, cross_section.e) 
         self.loss_percentage = self.calculate_loss_percentage(self.loss, load.sigma_p_max)
     
 
-    def calculate_delta_sigma_pr(self, fpk: float, fp01k: float, t = 500000) -> float:
+    def calculate_delta_sigma_pr(self, fpk: float, fp01k: float, t) -> float:
         ''' Calculation of loss in stress because of relaxation, where the steel is exposed to constant
         strain for long time, according to EC2 3.3.2(7) and 5.10.3(2). Assumed class 2: low relaxation. 
         Args:
@@ -39,7 +39,7 @@ class time_effects:
         Returns:
             delta_sigma_pr(float):  Absolute value of relaxation loss [N/mm2]
         '''
-        sigma_pi = abs(min(0.75 * fpk, 0.85 * fp01k)) # From EC2 (5.45)
+        sigma_pi = min(0.75 * fpk, 0.85 * fp01k) # From EC2 (5.43)
 
         ro_1000 = 2.5 # 3.3.2(6), assumed class 2 from 3.3.2(4)
 
@@ -49,17 +49,17 @@ class time_effects:
         delta_sigma_pr = sigma_pi * (0.66 * ro_1000 * np.e ** (9.1 * my) * ((t/1000) ** (0.75 * (1 - my))) * 10 ** (-5)) 
         return delta_sigma_pr
 
-    def calculate_stress_reduction(self, eps_cs: float, Ep: float, Ecm: float, delta_sigma_pr: float, phi_selfload: float, phi_liveload: float,
+    def calculate_stress_reduction(self, eps_cs: float, Ep: float, Ecm: float, delta_sigma_pr: float, phi_selfload: float,
                               sigma_c_QP: float, Ap: float, Ac: float, Ic: float, zcp: float) -> float:
         '''Total time dependant stress reduction in prestress, simplfied from EC2 5.10.6(2). Since the beam have self-load and live-load, its assumed
         that this formula can be used by simply adding the stress reduction from self-load together with the reduction from live-load.
+        Using creep number for self-load, assumed that the prestress is applied at the same time. 
         Args:
             eps_cs(float):  total shrinkage strain, from Deflection class
             Ep(int):  elasticity modulus for prestress, from Material class [N/mm2]
             Ecm(int):  elasticity modulus for concrete, from Material class[N/mm2]
             delta_sigma_pr(float):  stress loss because of relaxation [N/mm2]
             phi_selfload(float):  creep number for self-load, from Creep number class 
-            phi_liveload(float):  creep number for live-load, from Creep number class
             sigma_c_QP(float):  concrete stress in line with prestress, from Uncracked stress class [N/mm2]
             Ap(float):  area of prestress, from Cross section class [mm2]
             Ac(float):  area of concrete, from Cross section class [mm2]
@@ -68,15 +68,10 @@ class time_effects:
         Return:
             delta_sigma_p(float):  absolute value loss in prestress because of shrink, creep and relaxation [N/mm2]
         '''
-        # Stress reduction because of relaxation, creep and shrink for self-load:
-        delta_sigma_p_self = (eps_cs * Ep + 0.8 * delta_sigma_pr + (Ep / Ecm) * phi_selfload * abs(sigma_c_QP)) / \
+        # Stress reduction because of relaxation, creep and shrink: 
+        delta_sigma_p = (eps_cs * Ep + 0.8 * delta_sigma_pr + (Ep / Ecm) * phi_selfload * abs(sigma_c_QP)) / \
                 (1 + (Ep / Ecm) * (Ap / Ac) * (1 + (Ac / Ic) * zcp ** 2) * (1 + 0.8 * phi_selfload))
-        
-        # Stress reduction because of relaxation, creep and shrink for live-load:
-        delta_sigma_p_live = (eps_cs * Ep + 0.8 * delta_sigma_pr + (Ep / Ecm) * phi_selfload * abs(sigma_c_QP)) / \
-                (1 + (Ep / Ecm) * (Ap / Ac) * (1 + (Ac / Ic) * zcp ** 2) * (1 + 0.8 * phi_liveload))
-        
-        delta_sigma_p = delta_sigma_p_self + delta_sigma_p_live 
+         
         return abs(delta_sigma_p)
     
     def calculate_loss_percentage(self, delta_sigma_p: float, sigma_p_max: float) -> float:

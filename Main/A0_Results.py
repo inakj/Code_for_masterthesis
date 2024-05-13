@@ -9,7 +9,7 @@ At the end of the script, the results of the ULS and SLS checks are printed base
 
 '''
 
-from A0_Input import Input # from the Input script, import the Input class (for all reinforcement patterns)
+from A0_Input import Input # From the Input script, import the Input class (for all reinforcement patterns)
 from B0_Material import Material # From the Material script, import the Material Class (for all reinforcement patterns)
 from B0_Cross_section import Cross_section # From the Cross section script, import the Cross section class (for all reinforcement patterns)
 from B0_Load import Load_properties # From the Load script, import the Load properties class (for all reinforcement patterns)
@@ -22,6 +22,7 @@ from D2_Reinforcement import Reinforcement_control_prestressed # From the Reinfo
 from E2_SLS_Crack import Crack_control_prestressed # From the SLS Crack script, import the Crack Control prestressed class (for prestressed reinforcement)
 from F2_SLS_Deflection import Deflection_prestressed # From the SLS Deflection script, import the Deflection prestressed class (for prestressed reinforcement)
 from H2_SLS_Uncracked import Uncracked_stress # From the SLS Uncracked script, import the Uncracked stress class (for prestressed reinforcement)
+from H3_SLS_Uncracked import Uncracked_stress_prestress_and_ordinary # From the SLS Uncracked script, import the Uncracked stress class (for prestressed and ordinary reinforcement)
 from G2_SLS_Cracked import Cracked_Stress # From the SLS Cracked script, import the Cracked stress class (for prestressed reinforcement)
 from I2_SLS_Stress import Stress # Fromt the SLS Stress script, import the Stress class (for prestressed reinforcement)
 from J2_Time_effects import time_effects # From the Time effects script, import the Time effects class (for prestressed reinforcement)
@@ -82,9 +83,7 @@ class Beam:
         # If the beam is prestressed, the following inctances and attribute apply to all prestressed beams 
 
         if input.is_the_beam_prestressed == True:
-
-            self.stress_uncracked_instance = Uncracked_stress(self.material_instance, self.cross_section_instance, self.load_instance)
-            self.time_effect_instance = time_effects(self.material_instance, self.cross_section_instance, self.creep_instance, self.stress_uncracked_instance, self.deflection_instance_1, self.load_instance)
+            
             self.concrete_emission = self.calculate_emissinos_concrete(input)
 
             # If the beam is NOT prestressed with ordinary reinforcement in top, the following inctances and attributes apply to the beam
@@ -96,6 +95,8 @@ class Beam:
                 self.deflection_instance = Deflection_prestressed(self.cross_section_instance, self.material_instance, self.load_instance, self.creep_instance, input.percent_longlasting_liveload,
                                                                   input.beam_length, input.relative_humidity, input.cement_class, self.time_effect_instance)
                 self.stress_cracked_instance = Cracked_Stress(self.material_instance, self.cross_section_instance, self.load_instance, self.deflection_instance, self.time_effect_instance, self.creep_instance)
+                self.stress_uncracked_instance = Uncracked_stress(self.material_instance, self.cross_section_instance, self.load_instance)
+                self.time_effect_instance = time_effects(self.material_instance, self.cross_section_instance, self.creep_instance, self.stress_uncracked_instance, self.deflection_instance_1, self.load_instance)
                 self.stress_instance = Stress(self.material_instance, self.deflection_instance, self.stress_uncracked_instance, self.stress_cracked_instance, self.load_instance, self.time_effect_instance)
                 self.ULS_instance = ULS_prestressed(self.material_instance, self.load_instance, self.cross_section_instance, self.time_effect_instance, input.shear_reinforcement)
                 self.crack_instance = Crack_control_prestressed(self.cross_section_instance, self.load_instance, self.material_instance, input.exposure_class, self.stress_instance, input.ordinary_reinforcement_diameter)
@@ -121,6 +122,8 @@ class Beam:
                 
                 self.is_the_beam_prestressed = True
                 self.prestressed_and_ordinary_in_top = True
+                self.stress_uncracked_instance = Uncracked_stress_prestress_and_ordinary(self.material_instance, self.cross_section_instance, self.load_instance,input.stirrup_diameter,input.ordinary_reinforcement_diameter)
+                self.time_effect_instance = time_effects(self.material_instance, self.cross_section_instance, self.creep_instance, self.stress_uncracked_instance, self.deflection_instance_1, self.load_instance)
                 self.ULS_instance = ULS_prestress_and_ordinary(self.material_instance, self.load_instance, self.cross_section_instance, self.time_effect_instance, input.shear_reinforcement)
                 self.M_control = self.control_M(self.ULS_instance)
                 self.V_control = self.control_V(self.ULS_instance)
@@ -301,6 +304,8 @@ class Beam:
             match input.concrete_class:
                 case 'C20':
                     return 1613 * input.width * input.height * 10 ** -6 * input.beam_length
+                case 'C25':
+                    return 1668 * input.width * input.height * 10 ** -6 * input.beam_length
                 case 'C30':
                     return 1723 * input.width * input.height * 10 ** -6 * input.beam_length
                 case 'C35':
@@ -336,6 +341,7 @@ class Beam:
         else:
             return 0
 
+
 # Define the input instance from the Input class
 my_input = Input()
 
@@ -347,6 +353,7 @@ if my_beam.is_the_beam_prestressed == True:
 
     # If the beam also contain ordinary reinforcment, the next three lines will be printed
     if my_beam.prestressed_and_ordinary_in_top == True:
+
         print(my_beam.M_control)
         print(my_beam.V_control)
         print(my_beam.printed_emission)
@@ -371,4 +378,5 @@ else:
     print(my_beam.deflection_control)
     print(my_beam.printed_emission)
     print(my_beam.printed_cost)
-    
+
+
